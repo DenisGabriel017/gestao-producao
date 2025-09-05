@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar Produto</title>
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Editar Produto</h1>
+            </div>
+        </section>
+        <section class="content">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/products/save}" method="post" th:object="${product}">
+                        <input type="hidden" th:field="*{id}">
+                        <div class="form-group">
+                            <label for="code">Código</label>
+                            <input type="text" class="form-control" id="code" th:field="*{code}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Nome</label>
+                            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sector">Setor</label>
+                            <select class="form-control" id="sector" th:field="*{sector}">
+                                <option th:each="sector : ${sectors}" th:value="${sector.name}" th:text="${sector.name}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="salePrice">Preço de Venda</label>
+                            <input type="number" step="0.01" class="form-control" id="salePrice" th:field="*{salePrice}">
+                        </div>
+                        <div class="form-group">
+                            <label for="unit">Unidade de Medida</label>
+                            <select class="form-control" id="unit" th:field="*{unit}">
+                                <option>KG</option>
+                                <option>UND</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments :: footer}"></footer>
+    <div th:replace="~{fragments :: scripts}"></div>
+</div>
+</body>
+</html>

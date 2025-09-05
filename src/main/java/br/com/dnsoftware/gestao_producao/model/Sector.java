@@ -7,29 +7,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name ="products")
+@Table(name = "sectors")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class Sector {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", unique = true, nullable = false)
-    private String code;
-
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", unique = true, nullable = false)
     private String name;
 
-    @Column(name = "sector")
-    private String sector;
 
-    @Column(name = "sale_price")
-    private Double salePrice;
-
-    @Column(name = "unit")
-    private String unit;
 }
