@@ -14,6 +14,10 @@ public class CommandService {
     @Autowired
     private CommandRepository commandRepository;
 
+    @Autowired
+    private UserService userService;
+
+
     public List<Command> findAll() {
         return commandRepository.findAll();
     }
@@ -29,4 +33,6 @@ public class CommandService {
     public void deleteById(Long id) {
         commandRepository.deleteById(id);
     }
+
+
 }

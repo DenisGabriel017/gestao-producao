@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestão de Produção | Dashboard</title>
+
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
+
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Dashboard</h1>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-primary card-outline">
+                            <div class="card-header">
+                                <h3 class="card-title">Resumo por Setor</h3>
+                                <div class="card-tools d-flex">
+                                    <select class="form-control mr-2" id="yearFilter">
+                                        <option value="Todos">Todos</option>
+                                    </select>
+                                    <select class="form-control mr-2" id="monthFilter">
+                                        <option value="Todos">Todos</option>
+                                    </select>
+                                    <select class="form-control" id="sectorFilter">
+                                        <option value="Todos">Todos</option>
+                                        <option th:each="sector : ${sectors}" th:value="${sector.name}" th:text="${sector.name}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="columnChart" style="height:250px; min-height:250px"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+    <div th:replace="~{fragments :: scripts}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        var myChart;
+        var yearFilter = document.getElementById('yearFilter');
+        var monthFilter = document.getElementById('monthFilter');
+        var sectorFilter = document.getElementById('sectorFilter');
+
+        function populateYearFilter() {
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear - 5; i <= currentYear; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                yearFilter.appendChild(option);
+            }
+        }
+
+        function populateMonthFilter() {
+            monthFilter.innerHTML = '<option value="Todos">Todos</option>';
+            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const selectedYear = yearFilter.value;
+
+            if (selectedYear !== 'Todos') {
+                for (let i = 0; i < 12; i++) {
+                    const option = document.createElement('option');
+                    option.value = selectedYear + '-' + String(i + 1).padStart(2, '0');
+                    option.textContent = months[i];
+                    monthFilter.appendChild(option);
+                }
+            }
+        }
+
+        function fetchAndRenderChart() {
+            const year = yearFilter.value === 'Todos' ? null : yearFilter.value;
+            const month = monthFilter.value === 'Todos' ? null : monthFilter.value;
+            const sector = sectorFilter.value === 'Todos' ? null : sectorFilter.value;
+
+            let url = '/api/chart-data?';
+            const params = [];
+
+            if (sector) {
+                params.push('sector=' + encodeURIComponent(sector));
+            }
+            if (month) {
+                params.push('month=' + encodeURIComponent(month));
+            }
+            if (year) {
+                params.push('year=' + encodeURIComponent(year));
+            }
+
+            url += params.join('&');
+
+            fetch(url)
+                .then(response => response.json())
+                .then(summaryData => {
+                    const labels = summaryData.map(item => item.sector);
+                    const data = summaryData.map(item => item.producedUnits);
+
+                    if (myChart) {
+                        myChart.destroy();
+                    }
+
+                    const ctx = document.getElementById('columnChart').getContext('2d');
+                    myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Unidades Produzidas',
+                                backgroundColor: 'rgba(60,141,188,0.9)',
+                                borderColor: 'rgba(60,141,188,0.8)',
+                                data: data
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    stacked: true,
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    stacked: true
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
+        }
+
+        populateYearFilter();
+        populateMonthFilter();
+
+        yearFilter.addEventListener('change', () => {
+            populateMonthFilter();
+            fetchAndRenderChart();
+        });
+        monthFilter.addEventListener('change', fetchAndRenderChart);
+        sectorFilter.addEventListener('change', fetchAndRenderChart);
+
+        window.onload = fetchAndRenderChart;
+    </script>
+</div>
+</body>
+</html>

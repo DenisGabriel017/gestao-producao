@@ -32,4 +32,5 @@ public class CanceledWeighing{
     @Column(name = "cancellation_date", nullable = false)
     private LocalDateTime cancellationDate;
 
+
 }

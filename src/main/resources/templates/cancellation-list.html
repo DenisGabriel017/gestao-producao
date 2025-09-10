@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestão de Produção | Pesagens Canceladas</title>
+
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Pesagens Canceladas</h1>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid mb-3">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-add-cancellation">
+                    <i class="fas fa-plus"></i> Nova Correção
+                </button>
+            </div>
+        </section>
+
+        <div class="modal fade" id="modal-add-cancellation">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Registrar Correção de Peso</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <form th:action="@{/cancellations/save}" method="post">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="originalRecordId">ID do Lançamento Original</label>
+                                <input type="number" class="form-control" id="originalRecordId" name="originalRecordId" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="canceledWeightKg">Peso a ser Subtraído (Kg)</label>
+                                <input type="number" step="0.01" class="form-control" id="canceledWeightKg" name="canceledWeightKg" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cancellationReason">Motivo</label>
+                                <input type="text" class="form-control" id="cancellationReason" name="cancellationReason">
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Correção</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Tabela de Correções</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>ID Original</th>
+                                <th>Peso Cancelado (Kg)</th>
+                                <th>Motivo</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="cancellation : ${cancellationList}">
+                                <td th:text="${cancellation.originalRecordId}"></td>
+                                <td th:text="${cancellation.canceledWeightKg}"></td>
+                                <td th:text="${cancellation.cancellationReason}"></td>
+                                <td th:text="${#temporals.format(cancellation.cancellationDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td>
+                                    <a th:href="@{/cancellations/delete/{id}(id=${cancellation.id})}" class="btn btn-danger btn-sm">Excluir</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+    <div th:replace="~{fragments :: scripts}"></div>
+
+</div>
+</body>
+</html>

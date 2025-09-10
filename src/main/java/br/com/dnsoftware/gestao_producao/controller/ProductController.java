@@ -2,10 +2,9 @@ package br.com.dnsoftware.gestao_producao.controller;
 
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.model.Sector;
-import br.com.dnsoftware.gestao_producao.service.CsvService;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
+import br.com.dnsoftware.gestao_producao.service.CsvService;
 import br.com.dnsoftware.gestao_producao.service.SectorService;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,8 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.print.attribute.standard.Media;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,23 +35,13 @@ public class ProductController {
         List<Sector> sectors = sectorService.findAll();
         model.addAttribute("products",products);
         model.addAttribute("sectors", sectors);
+        model.addAttribute("product", new Product());
         return "product-list";
     }
 
     @PostMapping("/save")
-    public String saveProduct(@RequestParam String code,
-                              @RequestParam String name,
-                              @RequestParam String sector,
-                              @RequestParam Double salePrice){
-
-        Product product = new Product();
-        product.setCode(code);
-        product.setName(name);
-        product.setSector(sector);
-        product.setSalePrice(salePrice);
-
+    public String saveProduct(Product product) {
         productService.save(product);
-
         return "redirect:/products";
     }
 
@@ -72,7 +59,7 @@ public class ProductController {
 
     @GetMapping("/delete/{id}")
     public String deleteProduct(@PathVariable("id") Long id){
-        productService.deletedById(id);
+        productService.deleteById(id);
         return "redirect:/products";
     }
 
@@ -86,11 +73,19 @@ public class ProductController {
 
     @GetMapping("/download-template")
     public ResponseEntity<String> downloadCsvTemplate(){
-        String csvHeader = "codigo,nome,setor,preco_venda,unidade";
+        String csvHeader = "code,name,sector,sale_price,unit";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"produtos_template.csv\"")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csvHeader);
+    }
+
+    @PostMapping("/sectors/save")
+    public String saveSector(@RequestParam String name) {
+        Sector sector = new Sector();
+        sector.setName(name);
+        sectorService.save(sector);
+        return "redirect:/products";
     }
 
 }

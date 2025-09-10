@@ -17,6 +17,10 @@
         </div>
         <div class="card-body">
             <p class="login-box-msg">Faça login para iniciar sua sessão</p>
+            <div th:if="${param.error}" class="alert alert-danger text-center">
+                Credenciais inválidas. Por favor, tente novamente.
+            </div>
+
             <form th:action="@{/login}" method="post">
                 <div class="input-group mb-3">
                     <input type="text" name="username" class="form-control" placeholder="Usuário">

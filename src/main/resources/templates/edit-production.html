@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar Lançamento</title>
+
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
+
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Editar Lançamento de Produção</h1>
+            </div>
+        </section>
+        <section class="content">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/production/save}" method="post" th:object="${production}">
+                        <input type="hidden" th:field="*{id}">
+                        <div class="form-group">
+                            <label for="productSelect">Produto</label>
+                            <select class="form-control" id="productSelect" th:field="*{product.id}" required>
+                                <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="producedUnits">Unidades Produzidas</label>
+                            <input type="number" class="form-control" id="producedUnits" th:field="*{producedUnits}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="consumedUnits">Unidades Consumidas</label>
+                            <input type="number" class="form-control" id="consumedUnits" th:field="*{consumedUnits}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="wasteUnits">Unidades de Desperdício</label>
+                            <input type="number" class="form-control" id="wasteUnits" th:field="*{wasteUnits}">
+                        </div>
+                        <div class="form-group">
+                            <label for="totalWeightKg">Peso Total (Kg)</label>
+                            <input type="number" step="0.01" class="form-control" id="totalWeightKg" th:field="*{totalWeightKg}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+    <footer th:replace="~{fragments :: footer}"></footer>
+    <div th:replace="~{fragments :: scripts}"></div>
+</div>
+</body>
+</html>

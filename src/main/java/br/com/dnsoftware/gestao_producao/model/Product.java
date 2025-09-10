@@ -32,4 +32,5 @@ public class Product {
 
     @Column(name = "unit")
     private String unit;
+
 }

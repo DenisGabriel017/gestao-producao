@@ -5,25 +5,28 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
+
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "sectors")
+@Table(name = "abc_sales")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Sector {
+public class ABC {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", unique = true, nullable = false)
-    private String name;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
+    @Column(name = "sold_units", nullable = false)
+    private Integer soldUnits;
 
-
+    @Column(name = "sale_date", nullable = false)
+    private LocalDate saleDate;
 }

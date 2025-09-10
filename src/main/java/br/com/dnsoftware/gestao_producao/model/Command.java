@@ -32,4 +32,5 @@ public class Command {
     private LocalDateTime consumptionDate;
 
 
+
 }
