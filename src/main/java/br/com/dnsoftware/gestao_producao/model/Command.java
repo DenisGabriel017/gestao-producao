@@ -31,6 +31,13 @@ public class Command {
     @Column(name = "consumption_date", nullable = false)
     private LocalDateTime consumptionDate;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "command_number", nullable = false)
+    private Integer commandNumber;
+
 
 
 }

@@ -7,7 +7,6 @@
 
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
-
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -18,78 +17,88 @@
     <div class="content-wrapper">
         <section class="content-header">
             <div class="container-fluid">
-                <h1>Registros de Comandas</h1>
+                <h1>Comandas (Consumo Interno)</h1>
             </div>
         </section>
 
         <section class="content">
-            <div class="container-fluid mb-3">
-                <div class="d-flex justify-content-start">
-                    <div class="dropdown d-inline">
-                        <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-upload"></i> Importar Excel
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-comanda-upload">Relatório de Comandas</a>
+            <div class="container-fluid">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-add-command">
+                        <i class="fas fa-plus"></i> Nova Comanda
+                    </button>
+                </div>
+
+                <div class="modal fade" id="modal-add-command">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title">Registrar Comanda</h4>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <form th:action="@{/comandas/save}" method="post">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="productId">Produto</label>
+                                        <select class="form-control" id="productId" name="productId" required>
+                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="quantity">Quantidade</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="commandNumber">Número da Comanda</label>
+                                        <select class="form-control" id="commandNumber" name="commandNumber" required>
+                                            <option th:each="i : ${#numbers.sequence(901, 921)}" th:value="${i}" th:text="${i}"></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer justify-content-between">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                                    <button type="submit" class="btn btn-primary">Salvar Comanda</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <div class="modal fade" id="modal-comanda-upload">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form th:action="@{/commands/upload}" method="post" enctype="multipart/form-data">
-                        <div class="modal-header">
-                            <h4 class="modal-title">Importar Relatório de Comandas</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="comandaFile">Selecione o arquivo Excel (.xlsx)</label>
-                                <input type="file" class="form-control" id="comandaFile" name="file" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                            <button type="submit" class="btn btn-primary">Importar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <section class="content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Tabela de Comandas</h3>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Produto</th>
-                            <th>Quantidade</th>
-                            <th>Data</th>
-                            <th>Ações</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="command : ${commandList}">
-                            <td th:text="${command.id}"></td>
-                            <td th:text="${command.product.name}"></td>
-                            <td th:text="${command.quantity}"></td>
-                            <td th:text="${command.consumptionDate}"></td>
-                            <td>
-                                <a href="#" class="btn btn-danger btn-sm">Excluir</a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Tabela de Comandas</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Data</th>
+                                <th>Usuário</th>
+                                <th>Comanda</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="command : ${commandList}">
+                                <td th:text="${command.id}"></td>
+                                <td th:text="${command.product.name}"></td>
+                                <td th:text="${command.quantity}"></td>
+                                <td th:text="${#temporals.format(command.consumptionDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${command.user.username}"></td>
+                                <td th:text="${command.commandNumber}"></td>
+                                <td>
+                                    <a th:href="@{/comandas/edit/{id}(id=${command.id})}" class="btn btn-info btn-sm">Editar</a>
+                                    <a th:href="@{/comandas/delete/{id}(id=${command.id})}" class="btn btn-danger btn-sm">Excluir</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>

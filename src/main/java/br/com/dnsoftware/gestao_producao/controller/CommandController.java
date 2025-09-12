@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/commands")
+@RequestMapping("/comandas")
 public class CommandController {
 
     @Autowired
@@ -27,21 +27,23 @@ public class CommandController {
     private ProductService productService;
 
     @GetMapping
-    public String listCommands(Model model){
+    public String listCommands(Model model) {
         List<Command> commandList = commandService.findAll();
         List<Product> productList = productService.findAll();
         model.addAttribute("commandList", commandList);
         model.addAttribute("productList", productList);
+        model.addAttribute("command", new Command());
         return "command-list";
     }
 
     @PostMapping("/save")
     public String saveCommand(@RequestParam Long productId,
-                              @RequestParam Integer quantity){
+                              @RequestParam Integer quantity,
+                              @RequestParam Integer commandNumber) {
 
         Optional<Product> optionalProduct = productService.findById(productId);
-        if (optionalProduct.isEmpty()){
-            return "redirect:/commands";
+        if (optionalProduct.isEmpty()) {
+            return "redirect:/comandas";
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -51,17 +53,19 @@ public class CommandController {
         command.setProduct(optionalProduct.get());
         command.setQuantity(quantity);
         command.setConsumptionDate(LocalDateTime.now());
+        command.setUser(currentUser);
+        command.setCommandNumber(commandNumber); // Novo campo
 
         commandService.save(command);
 
-        return "redirect:/commands";
+        return "redirect:/comandas";
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") Long id, Model model){
+    public String showEditForm(@PathVariable("id") Long id, Model model) {
         Optional<Command> optionalCommand = commandService.findById(id);
-        if (optionalCommand.isEmpty()){
-            return "redirect:/commands";
+        if (optionalCommand.isEmpty()) {
+            return "redirect:/comandas";
         }
         model.addAttribute("command", optionalCommand.get());
         model.addAttribute("productList", productService.findAll());
@@ -69,8 +73,26 @@ public class CommandController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteCommand(@PathVariable("id") Long id){
+    public String deleteCommand(@PathVariable("id") Long id) {
         commandService.deleteById(id);
-        return "redirect:/commands";
+        return "redirect:/comandas";
+    }
+
+    @PostMapping("/update")
+    public String updateCommand(@RequestParam Long id,
+                                @RequestParam Long productId,
+                                @RequestParam Integer quantity,
+                                @RequestParam Integer commandNumber){
+        Optional<Command> optionalCommand = commandService.findById(id);
+        Optional<Product> optionalProduct = productService.findById(productId);
+
+        if (optionalCommand.isPresent() && optionalProduct.isPresent()){
+            Command command = optionalCommand.get();
+            command.setProduct(optionalProduct.get());
+            command.setQuantity(quantity);
+            command.setCommandNumber(commandNumber);
+            commandService.save(command);
+        }
+        return "redorect:/comandas";
     }
 }

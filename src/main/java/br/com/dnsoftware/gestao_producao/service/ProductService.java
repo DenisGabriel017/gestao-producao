@@ -2,6 +2,7 @@ package br.com.dnsoftware.gestao_producao.service;
 
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.repository.ProductRepository;
+import org.apache.xmlbeans.impl.xb.xsdschema.Public;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +30,15 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public void findByName(String name){
-       productRepository.findByName(name);
+
+    public Optional<Product> findByName(String name){
+        return productRepository.findByName(name);
     }
 
+    public Optional<Product> findByCode(String code){
+        if (code == null || code.trim().isEmpty()){
+            return  Optional.empty();
+        }
+        return productRepository.findByCode(code.trim());
+    }
 }

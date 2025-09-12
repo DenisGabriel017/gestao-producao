@@ -1,10 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestão de Produção | Curva ABC</title>
+
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
 </head>
-<body>
-$END$
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Curva ABC (Vendas)</h1>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-add-abc">
+                        <i class="fas fa-plus"></i> Novo Lançamento de Venda
+                    </button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-import-abc">
+                        <i class="fas fa-file-upload"></i> Importar ABC
+                    </button>
+                </div>
+
+                <div class="modal fade" id="modal-add-abc">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title">Registrar Venda</h4>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <form th:action="@{/abc/save}" method="post">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="productId">Produto</label>
+                                        <select class="form-control" id="productId" name="productId" required>
+                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="soldUnits">Unidades Vendidas</label>
+                                        <input type="number" class="form-control" id="soldUnits" name="soldUnits" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer justify-content-between">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                                    <button type="submit" class="btn btn-primary">Salvar Venda</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Tabela de Vendas</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Produto</th>
+                                <th>Unidades Vendidas</th>
+                                <th>Data da Venda</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="abc : ${abcList}">
+                                <td th:text="${abc.id}"></td>
+                                <td th:text="${abc.product.name}"></td>
+                                <td th:text="${abc.soldUnits}"></td>
+                                <td th:text="${#temporals.format(abc.saleDate, 'dd/MM/yyyy')}"></td>
+                                <td>
+                                    <a th:href="@{/abc/edit/{id}(id=${abc.id})}" class="btn btn-info btn-sm">Editar</a>
+                                    <a th:href="@{/abc/delete/{id}(id=${abc.id})}" class="btn btn-danger btn-sm">Excluir</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+    <div th:replace="~{fragments :: scripts}"></div>
+
+</div>
+<div class="modal fade" id="modal-import-abc">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/abc/upload}" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h4 class="modal-title">Importar Dados da Curva ABC</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="startDate">Data de Início</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">Data de Fim</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="abcFile">Selecione o arquivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control" id="abcFile" name="file" required>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-success">Importar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

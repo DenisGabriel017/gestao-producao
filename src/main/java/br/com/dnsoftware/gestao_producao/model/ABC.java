@@ -25,7 +25,7 @@ public class ABC {
     private Product product;
 
     @Column(name = "sold_units", nullable = false)
-    private Integer soldUnits;
+    private double soldUnits;
 
     @Column(name = "sale_date", nullable = false)
     private LocalDate saleDate;
