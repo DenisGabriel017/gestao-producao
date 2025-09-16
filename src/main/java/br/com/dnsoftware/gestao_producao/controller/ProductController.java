@@ -29,6 +29,8 @@ public class ProductController {
     @Autowired
     private SectorService sectorService;
 
+    
+
     @GetMapping
     public String listProducts(Model model){
         List<Product> products = productService.findAll();

@@ -11,7 +11,7 @@ import java.time.LocalDate;
 public interface ABCRepository extends JpaRepository<ABC, Long> {
 
     @Modifying
-    @Query("DELETE FROM ABC a WHERE a.saleDate BETWEEN :startDate AND :endDate")
-    void deleteBydateRange(@Param("startDate")LocalDate startDate, @Param("endDate") LocalDate endDate);
+    @Query("DELETE FROM ABC a WHERE a.saleDate >= :startDate AND a.saleDate < :endDatePlusOneDay")
+    void deleteByDateRange(@Param("startDate") LocalDate startDate, @Param("endDatePlusOneDay") LocalDate endDatePlusOneDay);
 
 }

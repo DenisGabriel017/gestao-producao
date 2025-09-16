@@ -7,7 +7,22 @@
 
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
-
+    <style>
+        .brand-link {
+            display: flex;
+            align-items: center;
+            padding: .8125rem .5rem;
+        }
+        .brand-image {
+            max-height: 33px;
+            width: auto;
+            margin-right: 10px;
+        }
+        .brand-text {
+            font-size: 1.2rem;
+            white-space: normal;
+        }
+    </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -23,174 +38,77 @@
         </section>
 
         <section class="content">
-            <div class="container-fluid mb-3">
-                <div class="d-flex justify-content-start">
-                    <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#modal-add-product">
-                        <i class="fas fa-plus"></i> Novo Produto
+            <div class="container-fluid">
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
-
-                    <div class="dropdown d-inline">
-                        <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-upload"></i> Importar
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-csv-upload">Importar CSV</a>
-                            <a class="dropdown-item" th:href="@{/products/download-template}">Baixar Modelo CSV</a>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </section>
-
-        <div class="modal fade" id="modal-add-product">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Cadastrar Novo Produto</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <form th:action="@{/products/save}" method="post" th:object="${product}">
-                        <input type="hidden" th:field="*{id}">
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="code">Código</label>
-                                <input type="text" class="form-control" id="code" name="code" required th:field="*{code}">
-                            </div>
-                            <div class="form-group">
-                                <label for="name">Nome</label>
-                                <input type="text" class="form-control" id="name" name="name" required th:field="*{name}">
-                            </div>
-                            <div class="form-group">
-                                <label for="sector">Setor</label>
-                                <select class="form-control" id="sector" name="sector" th:field="*{sector}">
-                                    <option th:each="sector : ${sectors}" th:value="${sector.name}" th:text="${sector.name}"></option>
-                                </select>
-                                <small class="form-text text-muted">
-                                    <a href="#" data-toggle="modal" data-target="#modal-add-sector" data-dismiss="modal">
-                                        Cadastrar novo setor
-                                    </a>
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label for="salePrice">Preço de Venda</label>
-                                <input type="number" step="0.01" class="form-control" id="salePrice" name="salePrice" th:field="*{salePrice}">
-                            </div>
-                            <div class="form-group">
-                                <label for="unit">Unidade de Medida</label>
-                                <select class="form-control" id="unit" name="unit" th:field="*{unit}">
-                                    <option value="KG">KG</option>
-                                    <option value="UND">UND</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Produto</button>
-                        </div>
-                    </form>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-            </div>
-        </div>
 
-        <div class="modal fade" id="modal-csv-upload">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form th:action="@{/products/upload}" method="post" enctype="multipart/form-data">
-                        <div class="modal-header">
-                            <h4 class="modal-title">Importar Produtos via CSV</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">×</span>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Tabela de Produtos</h3>
+                        <div class="card-tools">
+                            <form th:action="@{/products}" method="get" class="d-inline-flex align-items-center mr-2">
+                                <input type="text" name="keyword" th:value="${keyword}" class="form-control form-control-sm" placeholder="Pesquisar por nome">
+                                <button type="submit" class="btn btn-primary btn-sm ml-2">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <a th:href="@{/products}" class="btn btn-secondary btn-sm ml-1">
+                                    <i class="fas fa-eraser"></i> Limpar
+                                </a>
+                            </form>
+                            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-product">
+                                <i class="fas fa-plus"></i> Novo Produto
                             </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="csvFile">Selecione o arquivo CSV</label>
-                                <input type="file" class="form-control" id="csvFile" name="file" required>
-                                <small class="form-text text-muted">O arquivo deve ter as colunas: codigo, nome, setor, preco_venda, unidade</small>
-                            </div>
-                        </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                            <button type="submit" class="btn btn-primary">Importar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="modal-add-sector">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Cadastrar Novo Setor</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <form th:action="@{/products/sectors/save}" method="post">
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="sectorName">Nome do Setor</label>
-                                <input type="text" class="form-control" id="sectorName" name="name" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Setor</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <section class="content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Tabela de Produtos</h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-primary btn-sm mr-2" data-toggle="modal" data-target="#modal-add-product">
-                            <i class="fas fa-plus"></i> Novo Produto
-                        </button>
-
-                        <div class="dropdown d-inline">
-                            <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-upload"></i> Importar
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-csv-upload">Importar CSV</a>
-                                <a class="dropdown-item" th:href="@{/products/download-template}">Baixar Modelo CSV</a>
+                            <div class="dropdown d-inline">
+                                <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-upload"></i> Importar
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-csv-upload">Importar CSV</a>
+                                    <a class="dropdown-item" th:href="@{/products/download-template}">Baixar Modelo CSV</a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Nome</th>
-                            <th>Setor</th>
-                            <th>Preço</th>
-                            <th>Unidade</th>
-                            <th>Ações</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="product : ${products}">
-                            <td th:text="${product.code}"></td>
-                            <td th:text="${product.name}"></td>
-                            <td th:text="${product.sector}"></td>
-                            <td th:text="${product.salePrice}"></td>
-                            <td th:text="${product.unit}"></td>
-                            <td>
-                                <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-info btn-sm">Editar</a>
-                                <a th:href="@{/products/delete/{id}(id=${product.id})}" class="btn btn-danger btn-sm">Excluir</a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(productsList)}">
+                            <p>Nenhum produto cadastrado.</p>
+                        </div>
+                        <table th:unless="${#lists.isEmpty(productsList)}" class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>Setor</th>
+                                <th>Preço</th>
+                                <th>Unidade</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="product : ${productsList}">
+                                <td th:text="${product.code}"></td>
+                                <td th:text="${product.name}"></td>
+                                <td th:text="${product.sector}"></td>
+                                <td th:text="${product.salePrice}"></td>
+                                <td th:text="${product.unit}"></td>
+                                <td>
+                                    <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-info btn-sm">Editar</a>
+                                    <a th:href="@{/products/delete/{id}(id=${product.id})}" class="btn btn-danger btn-sm">Excluir</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
@@ -199,6 +117,109 @@
     <footer th:replace="~{fragments :: footer}"></footer>
     <div th:replace="~{fragments :: scripts}"></div>
 
+</div>
+
+<div class="modal fade" id="modal-add-product">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Cadastrar Novo Produto</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form th:action="@{/products/save}" method="post" th:object="${product}">
+                <input type="hidden" th:field="*{id}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="code">Código</label>
+                        <input type="text" class="form-control" id="code" name="code" required th:field="*{code}">
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Nome</label>
+                        <input type="text" class="form-control" id="name" name="name" required th:field="*{name}">
+                    </div>
+                    <div class="form-group">
+                        <label for="sector">Setor</label>
+                        <select class="form-control" id="sector" name="sector" th:field="*{sector}">
+                            <option th:each="sector : ${sectors}" th:value="${sector.name}" th:text="${sector.name}"></option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <a href="#" data-toggle="modal" data-target="#modal-add-sector" data-dismiss="modal">
+                                Cadastrar novo setor
+                            </a>
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="salePrice">Preço de Venda</label>
+                        <input type="number" step="0.01" class="form-control" id="salePrice" name="salePrice" th:field="*{salePrice}">
+                    </div>
+                    <div class="form-group">
+                        <label for="unit">Unidade de Medida</label>
+                        <select class="form-control" id="unit" name="unit" th:field="*{unit}">
+                            <option value="KG">KG</option>
+                            <option value="UND">UND</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-csv-upload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/products/upload}" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h4 class="modal-title">Importar Produtos via CSV</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="csvFile">Selecione o arquivo CSV</label>
+                        <input type="file" class="form-control" id="csvFile" name="file" required>
+                        <small class="form-text text-muted">O arquivo deve ter as colunas: codigo, nome, setor, preco_venda, unidade</small>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Importar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-add-sector">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Cadastrar Novo Setor</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form th:action="@{/products/sectors/save}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="sectorName">Nome do Setor</label>
+                        <input type="text" class="form-control" id="sectorName" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Setor</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 </body>
 </html>

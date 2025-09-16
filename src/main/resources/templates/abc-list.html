@@ -30,6 +30,22 @@
                     <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-import-abc">
                         <i class="fas fa-file-upload"></i> Importar ABC
                     </button>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-delete-abc">
+                        <i class="fas fa-trash"></i> Excluir Dados
+                    </button>
+                </div>
+
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
 
                 <div class="modal fade" id="modal-add-abc">
@@ -46,7 +62,7 @@
                                     <div class="form-group">
                                         <label for="productId">Produto</label>
                                         <select class="form-control" id="productId" name="productId" required>
-                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
+                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}" ></option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -101,6 +117,7 @@
     <div th:replace="~{fragments :: scripts}"></div>
 
 </div>
+
 <div class="modal fade" id="modal-import-abc">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -133,5 +150,36 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modal-delete-abc">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/abc/deleteByRange}" method="post">
+                <div class="modal-header">
+                    <h4 class="modal-title">Excluir Dados do Período</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir os dados do período selecionado? Esta ação não pode ser desfeita.</p>
+                    <div class="form-group">
+                        <label for="deleteStartDate">Data de Início:</label>
+                        <input type="date" class="form-control" id="deleteStartDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deleteEndDate">Data de Fim:</label>
+                        <input type="date" class="form-control" id="deleteEndDate" name="endDate" required>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

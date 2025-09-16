@@ -103,4 +103,17 @@ public class ABCController {
         }
         return "redirect:/abc";
     }
+
+    @PostMapping("/deleteByRange")
+    public String deleteByDateRange(@RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                    @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                    RedirectAttributes redirectAttributes){
+        try{
+            abcService.deleteByDateRange(startDate,endDate);
+            redirectAttributes.addFlashAttribute("SucessMessage", "Dados do período de " + startDate + " a " + endDate + " foram excluídos com sucesso!");
+        }catch (Exception e){
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao tentar excluir os dados: " + e.getMessage());
+        }
+        return "redirect:/abc";
+    }
 }

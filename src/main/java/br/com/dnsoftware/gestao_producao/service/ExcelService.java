@@ -6,6 +6,7 @@ import br.com.dnsoftware.gestao_producao.dto.ProductionDTO;
 import br.com.dnsoftware.gestao_producao.model.*;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -122,17 +123,14 @@ public class ExcelService {
         }
     }
 
+    @Transactional
     public void importAbcData(MultipartFile file, LocalDate startDate, LocalDate endDate){
         if (file.isEmpty()){
             return;
         }
-
+        LocalDate adjustedEndDate = endDate.plusDays(1);
+        abcService.deleteByDateRange(startDate,adjustedEndDate);
         List<ABC_DTO> dtos = convertExcelToAbcDtos(file);
-
-        System.out.println("DEBUG: Datas de importação - Início: " + startDate + ", Fim: " + endDate);
-
-        abcService.deleteByDateRange(startDate,endDate);
-
         List<ABC> abcList = new ArrayList<>();
 
         for (ABC_DTO dto : dtos){
@@ -142,7 +140,7 @@ public class ExcelService {
                 ABC abc = new ABC();
                 abc.setProduct(optionalProduct.get());
                 abc.setSoldUnits(dto.getTotalProduced());
-                abc.setSaleDate(LocalDate.now());
+                abc.setSaleDate(endDate);
 
                 abcList.add(abc);
             }else {
@@ -220,6 +218,7 @@ public class ExcelService {
         }
         return abcDtos;
     }
+
 
 
 }

@@ -38,6 +38,7 @@ public class ABCService {
 
     @Transactional
     public void deleteByDateRange(LocalDate startDate, LocalDate endDate){
-        abcRepository.deleteBydateRange(startDate, endDate);
+        LocalDate adjustedEndDate = endDate.plusDays(1);
+        abcRepository.deleteByDateRange(startDate, adjustedEndDate);
     }
 }
