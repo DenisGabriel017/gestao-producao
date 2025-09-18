@@ -3,7 +3,6 @@ package br.com.dnsoftware.gestao_producao.controller;
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.model.Sector;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
-import br.com.dnsoftware.gestao_producao.service.CsvService;
 import br.com.dnsoftware.gestao_producao.service.SectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -24,21 +25,25 @@ public class ProductController {
     private ProductService productService;
 
     @Autowired
-    private CsvService csvService;
-
-    @Autowired
     private SectorService sectorService;
 
-    
-
     @GetMapping
-    public String listProducts(Model model){
-        List<Product> products = productService.findAll();
+    public String listProducts(Model model,
+                               @RequestParam(required = false) String keyword,
+                               @RequestParam(required = false) String sector){
+        List<Product> products = productService.findFilteredProducts(keyword, sector);
         List<Sector> sectors = sectorService.findAll();
         model.addAttribute("products",products);
+        model.addAttribute("keyword", keyword);
         model.addAttribute("sectors", sectors);
+        model.addAttribute("selectedSector", sector);
         model.addAttribute("product", new Product());
         return "product-list";
+    }
+
+    @GetMapping("/sectors")
+    public List<Sector> listAllSectors(){
+        return sectorService.findAll();
     }
 
     @PostMapping("/save")
@@ -65,11 +70,20 @@ public class ProductController {
         return "redirect:/products";
     }
 
-    @PostMapping("/upload")
-    public String uploadFile(@RequestParam("file") MultipartFile file){
-        if (!file.isEmpty()){
-            csvService.processProducts(file);
+    @PostMapping("/upload-excel")
+    public String uploadExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Por favor, selecione um arquivo para importar.");
+            return "redirect:/products";
         }
+
+        try {
+            productService.importFromExcel(file);
+            redirectAttributes.addFlashAttribute("successMessage", "Produtos importados via Excel com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao importar o arquivo Excel: " + e.getMessage());
+        }
+
         return "redirect:/products";
     }
 
@@ -87,6 +101,12 @@ public class ProductController {
         Sector sector = new Sector();
         sector.setName(name);
         sectorService.save(sector);
+        return "redirect:/products";
+    }
+
+    @PostMapping("/clear-base")
+    public String clearProductsDatabase(){
+        productService.deleteAllProducts();
         return "redirect:/products";
     }
 

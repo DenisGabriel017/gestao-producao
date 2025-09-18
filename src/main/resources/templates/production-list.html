@@ -27,20 +27,39 @@
                     <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#modal-add-production">
                         <i class="fas fa-plus"></i> Novo Lançamento
                     </button>
-                    <div class="dropdown d-inline">
-                        <button class="btn btn-info btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-upload"></i> Importar Excel
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-production-upload">Relatório de Produção</a>
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-comanda-upload">Relatório de Comandas</a>
-                        </div>
-                    </div>
+                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-production-upload">
+                        <i class="fas fa-upload"></i> Importar Excel
+                    </button>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Tabela de Lançamentos de Produção</h3>
+                        <div class="card-tools">
+                            <form th:action="@{/production}" method="get" class="d-inline-flex align-items-center mr-2">
+                                <input type="text" name="keyword" th:value="${keyword}" class="form-control form-control-sm" placeholder="Pesquisar por nome ou código">
+                                <select name="sector" class="form-control form-control-sm ml-2">
+                                    <option value="">Todos os Setores</option>
+                                    <option th:each="s : ${sectors}"
+                                            th:value="${s}"
+                                            th:text="${s}"
+                                            th:selected="${selectedSector == s}"></option>
+                                </select>
+                                <select name="year" class="form-control form-control-sm ml-2">
+                                    <option value="">Todos os Anos</option>
+                                    <option th:each="y : ${distinctYears}"
+                                            th:value="${y}"
+                                            th:text="${y}"
+                                            th:selected="${selectedYear == y}"></option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm ml-2">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <a th:href="@{/production}" class="btn btn-secondary btn-sm ml-1" title="Limpar Filtro">
+                                    <i class="fas fa-eraser"></i>
+                                </a>
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <table class="table table-bordered table-striped">
@@ -49,8 +68,6 @@
                                 <th>Data</th>
                                 <th>Produto</th>
                                 <th>Produzido</th>
-                                <th>Consumido</th>
-                                <th>Desperdício</th>
                                 <th>Peso Total</th>
                                 <th>Ações</th>
                             </tr>
@@ -60,8 +77,6 @@
                                 <td th:text="${#temporals.format(production.productionDate, 'dd/MM/yyyy')}"></td>
                                 <td th:text="${production.product.name}"></td>
                                 <td th:text="${production.producedUnits}"></td>
-                                <td th:text="${production.consumedUnits}"></td>
-                                <td th:text="${production.wasteUnits}"></td>
                                 <td th:text="${production.totalWeightKg}"></td>
                                 <td>
                                     <a th:href="@{/production/edit/{id}(id=${production.id})}" class="btn btn-info btn-sm">Editar</a>
@@ -98,14 +113,6 @@
                             <input type="number" class="form-control" id="producedUnits" name="producedUnits" required>
                         </div>
                         <div class="form-group">
-                            <label for="consumedUnits">Unidades Consumidas</label>
-                            <input type="number" class="form-control" id="consumedUnits" name="consumedUnits" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="wasteUnits">Unidades de Desperdício</label>
-                            <input type="number" class="form-control" id="wasteUnits" name="wasteUnits">
-                        </div>
-                        <div class="form-group">
                             <label for="totalWeightKg">Peso Total (Kg)</label>
                             <input type="number" step="0.01" class="form-control" id="totalWeightKg" name="totalWeightKg">
                         </div>
@@ -130,6 +137,14 @@
                         </button>
                     </div>
                     <div class="modal-body">
+                        <div class="form-group">
+                            <label for="startDate">Data de Início:</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">Data Final:</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" required>
+                        </div>
                         <div class="form-group">
                             <label for="productionFile">Selecione o arquivo Excel (.xlsx)</label>
                             <input type="file" class="form-control" id="productionFile" name="file" required>

@@ -61,9 +61,14 @@
                                 <button type="submit" class="btn btn-primary btn-sm ml-2">
                                     <i class="fas fa-search"></i>
                                 </button>
-                                <a th:href="@{/products}" class="btn btn-secondary btn-sm ml-1">
-                                    <i class="fas fa-eraser"></i> Limpar
+                                <a th:href="@{/products}" class="btn btn-secondary btn-sm ml-1 d-flex align-items-center justify-content-center" title="Limpar Filtro">
+                                    <i class="fas fa-eraser"></i>
                                 </a>
+                            </form>
+                            <form id="form-limpar" th:action="@{/products/clear-base}" method="post" style="display:inline;">
+                                <button type="button" class="btn btn-danger btn-sm" id="btn-limpar">
+                                    <i class="fas fa-trash"></i> Limpar Base de Dados
+                                </button>
                             </form>
                             <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-product">
                                 <i class="fas fa-plus"></i> Novo Produto
@@ -73,17 +78,17 @@
                                     <i class="fas fa-upload"></i> Importar
                                 </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-csv-upload">Importar CSV</a>
+                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-excel-upload">Importar Excel</a>
                                     <a class="dropdown-item" th:href="@{/products/download-template}">Baixar Modelo CSV</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div th:if="${#lists.isEmpty(productsList)}">
+                        <div th:if="${#lists.isEmpty(products)}">
                             <p>Nenhum produto cadastrado.</p>
                         </div>
-                        <table th:unless="${#lists.isEmpty(productsList)}" class="table table-bordered table-striped">
+                        <table th:unless="${#lists.isEmpty(products)}" class="table table-bordered table-striped">
                             <thead>
                             <tr>
                                 <th>Código</th>
@@ -95,7 +100,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="product : ${productsList}">
+                            <tr th:each="product : ${products}">
                                 <td th:text="${product.code}"></td>
                                 <td th:text="${product.name}"></td>
                                 <td th:text="${product.sector}"></td>
@@ -171,21 +176,21 @@
     </div>
 </div>
 
-<div class="modal fade" id="modal-csv-upload">
+<div class="modal fade" id="modal-excel-upload">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form th:action="@{/products/upload}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/products/upload-excel}" method="post" enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h4 class="modal-title">Importar Produtos via CSV</h4>
+                    <h4 class="modal-title">Importar Produtos via Excel</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="csvFile">Selecione o arquivo CSV</label>
-                        <input type="file" class="form-control" id="csvFile" name="file" required>
-                        <small class="form-text text-muted">O arquivo deve ter as colunas: codigo, nome, setor, preco_venda, unidade</small>
+                        <label for="excelFile">Selecione o arquivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control" id="excelFile" name="file" required>
+                        <small class="form-text text-muted">O arquivo deve ter as colunas: codigo, nome, unidade, preco_venda, setor</small>
                     </div>
                 </div>
                 <div class="modal-footer justify-content-between">
@@ -221,5 +226,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('btn-limpar').addEventListener('click', function(event) {
+        if (confirm("Tem certeza que deseja apagar TODOS os produtos? Esta ação é irreversível!")) {
+            document.getElementById('form-limpar').submit();
+        }
+    });
+</script>
 </body>
 </html>

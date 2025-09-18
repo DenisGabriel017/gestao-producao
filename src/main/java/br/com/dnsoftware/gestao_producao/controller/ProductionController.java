@@ -2,17 +2,15 @@ package br.com.dnsoftware.gestao_producao.controller;
 
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.model.Production;
-import br.com.dnsoftware.gestao_producao.model.User;
-import br.com.dnsoftware.gestao_producao.service.ExcelService;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
 import br.com.dnsoftware.gestao_producao.service.ProductionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,8 +26,6 @@ public class ProductionController {
     @Autowired
     private ProductService productService;
 
-    @Autowired
-    private ExcelService excelService;
 
     @GetMapping
     public String listProduction(Model model){
@@ -43,16 +39,13 @@ public class ProductionController {
 
     @PostMapping("/save")
     public String saveProduction(@RequestParam Long productId,
-                                 @RequestParam Integer producedUnits,
+                                 @RequestParam Double producedUnits,
                                  @RequestParam(required = false) Double totalWeightKg){
 
         Optional<Product> optionalProduct = productService.findById(productId);
         if (optionalProduct.isEmpty()){
             return "redirect:/production";
         }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
 
         Production production = new Production();
         production.setProduct(optionalProduct.get());
@@ -83,15 +76,21 @@ public class ProductionController {
     }
 
     @PostMapping("/upload/production")
-    public String uploadProductionFile(@RequestParam("file") MultipartFile file) {
-        excelService.importProductionData(file);
-        return "redirect:/production";
-    }
+    public String uploadProductionFile(@RequestParam("file") MultipartFile file,
+                                       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                       RedirectAttributes redirectAttributes) {
 
-    @PostMapping("/upload/comandas")
-    public String uploadComandasFile(@RequestParam("file") MultipartFile file) {
-        excelService.importComandasData(file);
-        return "redirect:/comandas";
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Por favor, selecione um arquivo para upload.");
+            return "redirect:/production";
+        }
+        try {
+            productionService.importProductionData(file, startDate);
+            redirectAttributes.addFlashAttribute("successMessage", "Dados de produção importados com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao importar o arquivo de produção: " + e.getMessage());
+        }
+        return "redirect:/production";
     }
 
 }

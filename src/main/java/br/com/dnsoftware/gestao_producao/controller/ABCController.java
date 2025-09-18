@@ -3,7 +3,6 @@ package br.com.dnsoftware.gestao_producao.controller;
 import br.com.dnsoftware.gestao_producao.model.ABC;
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.service.ABCService;
-import br.com.dnsoftware.gestao_producao.service.ExcelService;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,15 +26,20 @@ public class ABCController {
     @Autowired
     private ProductService productService;
 
-    @Autowired
-    private ExcelService excelService;
-
     @GetMapping
-    public String listABC(Model model) {
-        List<ABC> abcList = abcService.findALL();
+    public String listABC(Model model,
+                          @RequestParam(required = false) String keyword,
+                          @RequestParam(required = false) String sector) {
+
+        List<ABC> abcList = abcService.findFilteredAbcData(keyword, sector);
         List<Product> productList = productService.findAll();
+        List<String> sectors = abcService.findDistinctSectors(); // Fixed method name
+
         model.addAttribute("abcList", abcList);
         model.addAttribute("productList", productList);
+        model.addAttribute("sectors", sectors);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedSector", sector);
         return "abc-list";
     }
 
@@ -91,15 +95,24 @@ public class ABCController {
                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
                                 RedirectAttributes redirectAttributes) {
+
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Por favor, selecione um arquivo para upload.");
             return "redirect:/abc";
         }
         try {
-            excelService.importAbcData(file, startDate, endDate);
-            redirectAttributes.addFlashAttribute("successMessage", "Dados da Curva ABC importados com sucesso!");
+            List<String> errorMessages = abcService.importAbcData(file, startDate, endDate);
+
+            if (errorMessages.isEmpty()) {
+                redirectAttributes.addFlashAttribute("successMessage", "Dados da Curva ABC importados com sucesso!");
+            } else {
+                String fullErrorMessage = "A importação foi concluída, mas com os seguintes erros:<br>" +
+                        String.join("<br>", errorMessages);
+                redirectAttributes.addFlashAttribute("errorMessage", fullErrorMessage);
+            }
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao importar o arquivo: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao importar o arquivo: " + e.getMessage());
         }
         return "redirect:/abc";
     }

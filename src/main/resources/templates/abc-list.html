@@ -48,40 +48,27 @@
                     </button>
                 </div>
 
-                <div class="modal fade" id="modal-add-abc">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title">Registrar Venda</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                            <form th:action="@{/abc/save}" method="post">
-                                <div class="modal-body">
-                                    <div class="form-group">
-                                        <label for="productId">Produto</label>
-                                        <select class="form-control" id="productId" name="productId" required>
-                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}" ></option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="soldUnits">Unidades Vendidas</label>
-                                        <input type="number" class="form-control" id="soldUnits" name="soldUnits" required>
-                                    </div>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                                    <button type="submit" class="btn btn-primary">Salvar Venda</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Tabela de Vendas</h3>
+                        <div class="card-tools">
+                            <form th:action="@{/abc}" method="get" class="d-inline-flex align-items-center mr-2">
+                                <input type="text" name="keyword" th:value="${keyword}" class="form-control form-control-sm" placeholder="Pesquisar por nome ou código">
+                                <select name="sector" class="form-control form-control-sm ml-2">
+                                    <option value="">Todos os Setores</option>
+                                    <option th:each="s : ${sectors}"
+                                            th:value="${s}"
+                                            th:text="${s}"
+                                            th:selected="${selectedSector == s}"></option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm ml-2">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <a th:href="@{/abc}" class="btn btn-secondary btn-sm ml-1 d-flex align-items-center justify-content-center" title="Limpar Filtro">
+                                    <i class="fas fa-eraser"></i>
+                                </a>
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <table class="table table-bordered table-striped">
@@ -98,7 +85,7 @@
                             <tr th:each="abc : ${abcList}">
                                 <td th:text="${abc.id}"></td>
                                 <td th:text="${abc.product.name}"></td>
-                                <td th:text="${abc.soldUnits}"></td>
+                                <td th:text="${abc.soldUnits} + ' ' + ${abc.product.unit}"></td>
                                 <td th:text="${#temporals.format(abc.saleDate, 'dd/MM/yyyy')}"></td>
                                 <td>
                                     <a th:href="@{/abc/edit/{id}(id=${abc.id})}" class="btn btn-info btn-sm">Editar</a>
@@ -118,6 +105,37 @@
 
 </div>
 
+<div class="modal fade" id="modal-add-abc">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Registrar Venda</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form th:action="@{/abc/save}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="productId">Produto</label>
+                        <select class="form-control" id="productId" name="productId" required>
+                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}" ></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="soldUnits">Unidades Vendidas</label>
+                        <input type="number" class="form-control" id="soldUnits" name="soldUnits" required>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Venda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal-import-abc">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -130,11 +148,11 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="startDate">Data de Início</label>
+                        <label for="startDate">Data de Início:</label>
                         <input type="date" class="form-control" id="startDate" name="startDate" required>
                     </div>
                     <div class="form-group">
-                        <label for="endDate">Data de Fim</label>
+                        <label for="endDate">Data Final:</label>
                         <input type="date" class="form-control" id="endDate" name="endDate" required>
                     </div>
                     <div class="form-group">
@@ -180,6 +198,5 @@
         </div>
     </div>
 </div>
-
 </body>
 </html>
