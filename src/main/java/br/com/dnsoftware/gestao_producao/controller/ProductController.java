@@ -5,9 +5,11 @@ import br.com.dnsoftware.gestao_producao.model.Sector;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
 import br.com.dnsoftware.gestao_producao.service.SectorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -30,10 +32,10 @@ public class ProductController {
     @GetMapping
     public String listProducts(Model model,
                                @RequestParam(required = false) String keyword,
-                               @RequestParam(required = false) String sector){
+                               @RequestParam(required = false) String sector) {
         List<Product> products = productService.findFilteredProducts(keyword, sector);
         List<Sector> sectors = sectorService.findAll();
-        model.addAttribute("products",products);
+        model.addAttribute("products", products);
         model.addAttribute("keyword", keyword);
         model.addAttribute("sectors", sectors);
         model.addAttribute("selectedSector", sector);
@@ -42,7 +44,7 @@ public class ProductController {
     }
 
     @GetMapping("/sectors")
-    public List<Sector> listAllSectors(){
+    public List<Sector> listAllSectors() {
         return sectorService.findAll();
     }
 
@@ -53,11 +55,11 @@ public class ProductController {
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") long id, Model model){
+    public String showEditForm(@PathVariable("id") long id, Model model) {
         Optional<Product> optionalProduct = productService.findById(id);
-        if (optionalProduct.isPresent()){
+        if (optionalProduct.isPresent()) {
             model.addAttribute("product", optionalProduct.get());
-        }else {
+        } else {
             return "redirect:/products";
         }
         model.addAttribute("sectors", sectorService.findAll());
@@ -65,8 +67,13 @@ public class ProductController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteProduct(@PathVariable("id") Long id){
-        productService.deleteById(id);
+    public String deleteProduct(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            productService.deleteById(id);
+            redirectAttributes.addFlashAttribute("sucessMessage", "Produto excluido com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possivel excluir o produto. Existem vendas ou registros de produção associados a ele.");
+        }
         return "redirect:/products";
     }
 
@@ -83,12 +90,11 @@ public class ProductController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao importar o arquivo Excel: " + e.getMessage());
         }
-
         return "redirect:/products";
     }
 
     @GetMapping("/download-template")
-    public ResponseEntity<String> downloadCsvTemplate(){
+    public ResponseEntity<String> downloadCsvTemplate() {
         String csvHeader = "code,name,sector,sale_price,unit";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"produtos_template.csv\"")
@@ -105,9 +111,15 @@ public class ProductController {
     }
 
     @PostMapping("/clear-base")
-    public String clearProductsDatabase(){
-        productService.deleteAllProducts();
+    public String clearProductsDatabase(RedirectAttributes redirectAttributes) {
+        try {
+            productService.deleteAllProducts();
+            redirectAttributes.addFlashAttribute("successMessage", "Produto excluido com sucesso!");
+
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possivel apagar o banco de dados, Existem vendas ou produções vinculadas a eles");
+
+        }
         return "redirect:/products";
     }
-
 }
