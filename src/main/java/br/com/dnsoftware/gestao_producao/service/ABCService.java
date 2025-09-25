@@ -55,7 +55,6 @@ public class ABCService {
         abcRepository.deleteByDateRange(startDate, adjustedEndDate);
     }
 
-    // CORREÇÃO: Nome do método de busca de setores corrigido para findDistinctSectors
     public List<String> findDistinctSectors() {
         return abcRepository.findDistinctSectors();
     }
