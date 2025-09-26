@@ -56,7 +56,7 @@ public class ProductionService {
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
-                    continue; // Pula a primeira linha (cabeçalho)
+                    continue; 
                 }
 
                 String code = dataFormatter.formatCellValue(row.getCell(0));
