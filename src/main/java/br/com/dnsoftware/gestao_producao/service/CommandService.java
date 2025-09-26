@@ -90,8 +90,7 @@ public class CommandService {
                     Product product = optionalProduct.get();
                     Integer quantity = Integer.parseInt(quantityStr.trim().replace(",", "."));
                     Integer commandNumber = Integer.parseInt(commandNumberStr.trim());
-
-                    // CORREÇÃO: Usando a data final do formulário para a data de consumo
+                
                     LocalDate consumptionDate = endDate;
 
                     Optional<Command> existingCommand = commandRepository.findByProductAndConsumptionDate(product, consumptionDate);
