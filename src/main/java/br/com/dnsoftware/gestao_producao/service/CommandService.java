@@ -64,16 +64,16 @@ public class CommandService {
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
-                    continue; // Pula a primeira linha (cabeçalho)
+                    continue;
                 }
 
-                String code = dataFormatter.formatCellValue(row.getCell(0)); // Coluna A
+                String code = dataFormatter.formatCellValue(row.getCell(0)); 
                 if (code.contains(",")) {
                     code = code.replace(",", "");
                 }
 
-                String quantityStr = dataFormatter.formatCellValue(row.getCell(1)); // Coluna B
-                String commandNumberStr = dataFormatter.formatCellValue(row.getCell(2)); // Coluna C
+                String quantityStr = dataFormatter.formatCellValue(row.getCell(1));
+                String commandNumberStr = dataFormatter.formatCellValue(row.getCell(2)); 
 
                 if (!StringUtils.hasText(code) || !StringUtils.hasText(quantityStr) || !StringUtils.hasText(commandNumberStr)) {
                     errorMessages.add("Linha " + (row.getRowNum() + 1) + ": Dados essenciais (código, quantidade, comanda) estão vazios e foram ignorados.");
@@ -97,7 +97,7 @@ public class CommandService {
 
                     if (existingCommand.isPresent()) {
                         Command command = existingCommand.get();
-                        command.setQuantity(quantity); // Sobrescreve a quantidade existente
+                        command.setQuantity(quantity); 
                         command.setCommandNumber(commandNumber);
                         commandRepository.save(command);
                     } else {
