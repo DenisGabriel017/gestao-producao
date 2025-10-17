@@ -30,6 +30,14 @@
                     <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-production-upload">
                         <i class="fas fa-upload"></i> Importar Excel
                     </button>
+                    <form th:action="@{/production/delete-all}" method="post" class="d-inline">
+                        <button type="submit"
+                                class="btn btn-danger btn-sm ml-2"
+                                onclick="return confirm('ATENÇÃO: Você tem certeza que deseja excluir TODOS os registros de Produção? Esta ação é irreversível.');"
+                                title="Excluir TODOS os registros de Produção">
+                            <i class="fas fa-trash-alt"></i> Excluir Toda a Produção
+                        </button>
+                    </form>
                 </div>
 
                 <div class="card">

@@ -5,6 +5,7 @@ import br.com.dnsoftware.gestao_producao.model.Production;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
 import br.com.dnsoftware.gestao_producao.service.ProductionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -93,4 +94,17 @@ public class ProductionController {
         return "redirect:/production";
     }
 
+    @PostMapping("/delete-all")
+    public String deleteAllProductionMvc(RedirectAttributes ra) {
+        try {
+            productionService.deleteAllProductionRecords();
+            ra.addFlashAttribute("successMessage", "Todos os registros de produção foram excluídos com sucesso.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("errorMessage", "Não foi possível apagar os registros de produção. Existem dados vinculados.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMessage", "Erro inesperado ao excluir a produção: " + e.getMessage());
+        }
+        return "redirect:/production";
+
+    }
 }

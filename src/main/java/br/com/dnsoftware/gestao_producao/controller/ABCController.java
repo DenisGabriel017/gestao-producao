@@ -33,7 +33,8 @@ public class ABCController {
 
         List<ABC> abcList = abcService.findFilteredAbcData(keyword, sector);
         List<Product> productList = productService.findAll();
-        List<String> sectors = abcService.findDistinctSectors(); // Fixed method name
+        List<String> sectors = abcService.findDistinctSectors();
+
 
         model.addAttribute("abcList", abcList);
         model.addAttribute("productList", productList);

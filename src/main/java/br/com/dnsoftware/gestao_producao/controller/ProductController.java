@@ -9,13 +9,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,16 +30,48 @@ public class ProductController {
     private SectorService sectorService;
 
     @GetMapping
-    public String listProducts(Model model,
-                               @RequestParam(required = false) String keyword,
-                               @RequestParam(required = false) String sector) {
-        List<Product> products = productService.findFilteredProducts(keyword, sector);
-        List<Sector> sectors = sectorService.findAll();
-        model.addAttribute("products", products);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("sectors", sectors);
-        model.addAttribute("selectedSector", sector);
+    public String listProducts(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "sector", required = false) String sector,
+            @RequestParam(value = "filterDay", required = false) Integer day,
+            @RequestParam(value = "filterMonth", required = false) Integer month,
+            @RequestParam(value = "filterYear", required = false) Integer year,
+            Model model) {
+
+        List<Product> productList;
+
+
+        String finalKeyword = (keyword != null && keyword.isEmpty()) ? null : keyword;
+        String finalSector = (sector != null && sector.isEmpty()) ? null : sector;
+
+
+        if (finalKeyword != null || finalSector != null || day != null || month != null || year != null) {
+
+
+            Integer yearToFilter = year;
+            if (month != null && yearToFilter == null) {
+                yearToFilter = LocalDate.now().getYear();
+            }
+
+            productList = productService.findFilteredProducts(finalKeyword, finalSector, day, month, yearToFilter);
+
+
+            model.addAttribute("currentKeyword", finalKeyword);
+            model.addAttribute("currentSector", finalSector);
+            model.addAttribute("currentDay", day);
+            model.addAttribute("currentMonth", month);
+            model.addAttribute("currentYear", year);
+
+        } else {
+            // Nenhum filtro aplicado: carrega todos os produtos
+            productList = productService.findAll();
+        }
+
+        // Adiciona a lista de produtos, setores e um novo objeto Product ao Model
+        model.addAttribute("productList", productList);
+        model.addAttribute("sectors", sectorService.findAll());
         model.addAttribute("product", new Product());
+
         return "product-list";
     }
 
@@ -70,9 +102,9 @@ public class ProductController {
     public String deleteProduct(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
             productService.deleteById(id);
-            redirectAttributes.addFlashAttribute("sucessMessage", "Produto excluido com sucesso!");
+            redirectAttributes.addFlashAttribute("sucessMessage", "Produto excluído com sucesso!");
         } catch (DataIntegrityViolationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possivel excluir o produto. Existem vendas ou registros de produção associados a ele.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possível excluir o produto. Existem vendas ou registros de produção associados a ele.");
         }
         return "redirect:/products";
     }
@@ -114,12 +146,27 @@ public class ProductController {
     public String clearProductsDatabase(RedirectAttributes redirectAttributes) {
         try {
             productService.deleteAllProducts();
-            redirectAttributes.addFlashAttribute("successMessage", "Produto excluido com sucesso!");
+            redirectAttributes.addFlashAttribute("successMessage", "Produto excluído com sucesso!");
 
         } catch (DataIntegrityViolationException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possivel apagar o banco de dados, Existem vendas ou produções vinculadas a eles");
+            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possível apagar o banco de dados. Existem vendas ou produções vinculadas a eles");
 
         }
         return "redirect:/products";
     }
+
+    @PostMapping("/delete-all")
+    public String deleteAllProductsMvc(RedirectAttributes redirectAttributes) {
+        try {
+            productService.deleteAllProducts();
+
+            redirectAttributes.addFlashAttribute("successMessage", "Todos os produtos foram excluídos com sucesso.");
+        } catch (DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Não foi possível apagar os produtos. Existem registros vinculados.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro inesperado ao excluir produtos: " + e.getMessage());
+        }
+        return "redirect:/products";
+    }
+
 }

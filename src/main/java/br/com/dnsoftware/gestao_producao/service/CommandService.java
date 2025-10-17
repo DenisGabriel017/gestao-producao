@@ -1,10 +1,10 @@
 package br.com.dnsoftware.gestao_producao.service;
 
+import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
 import br.com.dnsoftware.gestao_producao.model.Command;
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.model.User;
 import br.com.dnsoftware.gestao_producao.repository.CommandRepository;
-import br.com.dnsoftware.gestao_producao.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -12,10 +12,10 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -64,16 +64,16 @@ public class CommandService {
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
-                    continue; // Pula a primeira linha (cabeçalho)
+                    continue;
                 }
 
-                String code = dataFormatter.formatCellValue(row.getCell(0)); // Coluna A
+                String code = dataFormatter.formatCellValue(row.getCell(0));
                 if (code.contains(",")) {
                     code = code.replace(",", "");
                 }
 
-                String quantityStr = dataFormatter.formatCellValue(row.getCell(1)); // Coluna B
-                String commandNumberStr = dataFormatter.formatCellValue(row.getCell(2)); // Coluna C
+                String quantityStr = dataFormatter.formatCellValue(row.getCell(1));
+                String commandNumberStr = dataFormatter.formatCellValue(row.getCell(2));
 
                 if (!StringUtils.hasText(code) || !StringUtils.hasText(quantityStr) || !StringUtils.hasText(commandNumberStr)) {
                     errorMessages.add("Linha " + (row.getRowNum() + 1) + ": Dados essenciais (código, quantidade, comanda) estão vazios e foram ignorados.");
@@ -91,14 +91,14 @@ public class CommandService {
                     Integer quantity = Integer.parseInt(quantityStr.trim().replace(",", "."));
                     Integer commandNumber = Integer.parseInt(commandNumberStr.trim());
 
-                    // CORREÇÃO: Usando a data final do formulário para a data de consumo
+
                     LocalDate consumptionDate = endDate;
 
                     Optional<Command> existingCommand = commandRepository.findByProductAndConsumptionDate(product, consumptionDate);
 
                     if (existingCommand.isPresent()) {
                         Command command = existingCommand.get();
-                        command.setQuantity(quantity); // Sobrescreve a quantidade existente
+                        command.setQuantity(quantity);
                         command.setCommandNumber(commandNumber);
                         commandRepository.save(command);
                     } else {
@@ -116,5 +116,36 @@ public class CommandService {
             }
         }
         return errorMessages;
+    }
+    public List<PerformanceReportDTO> generatePerformanceReport(LocalDate startDate, LocalDate endDate) {
+
+        List<PerformanceReportDTO> rawResults = commandRepository.findPerformanceReportByPeriod(startDate, endDate);
+
+        for (PerformanceReportDTO dto : rawResults) {
+
+
+            double gapBuffet = dto.getTotalIdaBuffet() - dto.getTotalVoltaBuffet();
+            dto.setGapBuffet(gapBuffet);
+
+
+
+            double totalSaidas = gapBuffet
+                    + dto.getTotalEmpresa908()
+                    + dto.getTotalEmpresa909()
+                    + dto.getTotalOutrosUsosPessoais()
+                    + dto.getTotalDesperdicio()
+                    + dto.getTotalEtiquetasDescartadas();
+            dto.setTotalSaidas(totalSaidas);
+
+
+            double gapFinal = dto.getTotalProduced() - totalSaidas;
+            dto.setGapFinal(gapFinal);
+        }
+
+        return rawResults;
+    }
+    @Transactional
+    public void deleteAllCommands(){
+        commandRepository.deleteAll();
     }
 }

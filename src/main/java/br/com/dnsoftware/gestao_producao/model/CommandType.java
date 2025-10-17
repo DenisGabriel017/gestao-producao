@@ -1,0 +1,25 @@
+package br.com.dnsoftware.gestao_producao.model;
+
+public enum CommandType {
+
+    USO_PESSOAL_901,
+    USO_PESSOAL_902,
+    USO_PESSOAL_903,
+    USO_PESSOAL_904,
+    USO_PESSOAL_905,
+    USO_PESSOAL_906,
+    USO_PESSOAL_907,
+    USO_PESSOAL_910,
+    NUTRICIONISTA_911,
+    CEIA_IBAL_912,
+    ENCOMENDAS_IBAL_913,
+    IDA_BUFFET_914,
+    VOLTA_BUFFET_915,
+    DESPERDICIO_916,
+    TRANSFORMACAO_921,
+
+    FAZENDA_909,
+    CREPERIA_908
+
+
+}

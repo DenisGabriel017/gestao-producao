@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestão de Produção | Relatório de Performance</title>
+
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
+
+    <style>
+        .table-responsive-custom {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <nav th:replace="~{fragments :: header}"></nav>
+    <aside th:replace="~{fragments :: sidebar}"></aside>
+
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <h1>Relatório de Performance (Produção & Vendas)</h1>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Filtros de Período</h3>
+                        <div class="card-tools">
+                            <div class="dropdown">
+                                <button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                                    Visualização Colunas
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right" id="columnVisibilityMenu">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="col-md-4 mb-3">
+                                <label for="startDate">Data Inicial:</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="endDate">Data Final:</label>
+                                <input type="date" class="form-control" id="endDate" required>
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <button class="btn btn-primary btn-block" id="generateReportBtn">Gerar Relatório</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Resultados Consolidados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive-custom">
+                            <table class="table table-bordered table-striped table-sm" id="performanceTable">
+                                <thead>
+                                <tr>
+                                    <th data-column-name="productName">Produtos</th>
+                                    <th data-column-name="totalProduced">T Produzido</th>
+                                    <th data-column-name="totalEtiquetasDescartadas">Et Desc.</th>
+                                    <th data-column-name="totalVendasABC">ABC</th>
+                                    <th data-column-name="gapBuffet" class="bg-primary">TT</th>
+                                    <th data-column-name="totalEmpresa909">FAZENDA</th>
+                                    <th data-column-name="totalEmpresa908">CREPERIA</th>
+                                    <th data-column-name="totalTransformacao">Transformação</th>
+                                    <th data-column-name="totalDesperdicio">Desperdício</th>
+                                    <th data-column-name="totalSaidas" class="bg-info">Total Saídas</th>
+                                    <th data-column-name="gapFinal" class="bg-warning">GAP Final</th>
+                                </tr>
+                                </thead>
+                                <tbody id="reportBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+
+    <div th:replace="~{fragments :: scripts}"></div>
+
+    <script th:inline="javascript">
+        function formatNumber(num) {
+            return parseFloat(num).toFixed(2);
+        }
+
+        const COLUMN_ORDER = [
+            'productName', 'totalProduced', 'totalEtiquetasDescartadas', 'totalVendasABC',
+            'gapBuffet', 'totalEmpresa909', 'totalEmpresa908',
+            'totalTransformacao', 'totalDesperdicio', 'totalSaidas', 'gapFinal'
+        ];
+
+        function toggleColumn(index) {
+            const table = document.getElementById('performanceTable');
+            const columnIndex = index;
+
+            for (let i = 0; i < table.rows.length; i++) {
+                const cell = table.rows[i].cells[columnIndex];
+                if (cell) {
+                    cell.style.display = cell.style.display === 'none' ? '' : 'none';
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            const $headers = $('#performanceTable th');
+            const $menu = $('#columnVisibilityMenu');
+
+            $headers.each(function(index) {
+                const columnName = $(this).text();
+                const initiallyHidden = ['Et Desc.', 'Desperdício (916)'].includes(columnName);
+
+                const item = `<a class="dropdown-item checkbox-item" href="#">
+                                <input type="checkbox" data-column-index="${index}" class="column-toggle" ${!initiallyHidden ? 'checked' : ''}>
+                                ${columnName}
+                              </a>`;
+                $menu.append(item);
+
+                if (initiallyHidden) {
+                    toggleColumn(index);
+                }
+            });
+
+            $menu.on('click', '.column-toggle', function(e) {
+                e.stopPropagation(); // Evita que o dropdown feche
+                const index = $(this).data('column-index');
+                toggleColumn(index);
+            });
+
+            $('#generateReportBtn').on('click', function() {
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+
+                if (!startDate || !endDate) {
+                    alert('Por favor, selecione as duas datas.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/api/commands/report',
+                    type: 'GET',
+                    data: {
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    success: function(data) {
+                        const $tbody = $('#reportBody');
+                        $tbody.empty();
+
+                        data.forEach(function(item) {
+                            const dataMap = {
+                                productName: item.productName,
+                                totalProduced: formatNumber(item.totalProduced),
+                                totalEtiquetasDescartadas: formatNumber(item.totalEtiquetasDescartadas),
+                                totalVendasABC: formatNumber(item.totalOutrosUsosPessoais),
+                                gapBuffet: formatNumber(item.gapBuffet),
+                                totalEmpresa909: formatNumber(item.totalEmpresa909),
+                                totalEmpresa908: formatNumber(item.totalEmpresa908),
+                                totalTransformacao: formatNumber(0.00),
+                                totalDesperdicio: formatNumber(item.totalDesperdicio),
+                                totalSaidas: formatNumber(item.totalSaidas),
+                                gapFinal: formatNumber(item.gapFinal)
+                            };
+
+                            let rowHtml = '<tr>';
+                            COLUMN_ORDER.forEach(function(key) {
+                                let cellClass = '';
+                                if (key === 'gapBuffet') cellClass = 'bg-primary font-weight-bold';
+                                if (key === 'totalSaidas') cellClass = 'bg-info';
+                                if (key === 'gapFinal') cellClass = 'bg-warning font-weight-bold';
+
+                                rowHtml += `<td class="${cellClass}">${dataMap[key]}</td>`;
+                            });
+                            rowHtml += '</tr>';
+                            $tbody.append(rowHtml);
+                        });
+
+                        $('#columnVisibilityMenu input:not(:checked)').each(function() {
+                            const index = $(this).data('column-index');
+                            toggleColumn(index);
+                        });
+
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao buscar o relatório. Verifique o console para detalhes.');
+                        console.error("Status:", status, "Erro:", error, "Resposta:", xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

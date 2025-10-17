@@ -1,12 +1,15 @@
 package br.com.dnsoftware.gestao_producao.service;
 
+import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
 import br.com.dnsoftware.gestao_producao.model.ABC;
 import br.com.dnsoftware.gestao_producao.model.CanceledWeighing;
 import br.com.dnsoftware.gestao_producao.model.Command;
 import br.com.dnsoftware.gestao_producao.model.Production;
+import br.com.dnsoftware.gestao_producao.repository.CommandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -20,10 +23,15 @@ public class ReportService {
     private ProductionService productionService;
 
     @Autowired
+    private CommandRepository commandRepository;
+
+    @Autowired
     private CommandService commandService;
 
     @Autowired
     private ABCService abcService;
+
+
 
     @Autowired
     private CanceledWeighingService canceledWeighingService;
@@ -96,4 +104,33 @@ public class ReportService {
 
         return reportData;
     }
+
+    public List<PerformanceReportDTO> generatePerformanceReport(LocalDate startDate, LocalDate endDate) {
+
+        List<PerformanceReportDTO> results = commandRepository.findPerformanceReportByPeriod(startDate, endDate);
+
+
+        for (PerformanceReportDTO dto : results) {
+
+
+            double gapBuffet = dto.getTotalIdaBuffet() - dto.getTotalVoltaBuffet();
+            dto.setGapBuffet(gapBuffet);
+
+
+            double totalSaidas = gapBuffet
+                    + dto.getTotalEmpresa908()
+                    + dto.getTotalEmpresa909()
+                    + dto.getTotalOutrosUsosPessoais()
+                    + dto.getTotalDesperdicio()
+                    + dto.getTotalEtiquetasDescartadas();
+            dto.setTotalSaidas(totalSaidas);
+
+
+            double gapFinal = dto.getTotalProduced() - totalSaidas;
+            dto.setGapFinal(gapFinal);
+        }
+
+        return results;
+    }
+
 }

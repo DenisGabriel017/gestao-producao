@@ -34,7 +34,7 @@ public class CanceledWeighingController {
         canceledWeighing.setOriginalRecordId(originalRecordId);
         canceledWeighing.setCanceledWeightKg(canceledWeightKg);
         canceledWeighing.setCancellationReason(cancellationReason);
-        canceledWeighing.setCancellationDate(LocalDateTime.now()); // Campo corrigido
+        canceledWeighing.setCancellationDate(LocalDateTime.now());
 
         canceledWeighingService.save(canceledWeighing);
 

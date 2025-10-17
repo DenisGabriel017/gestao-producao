@@ -24,6 +24,13 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/login", "/css/**", "/js/**", "/webjars/**").permitAll()
+
+                        .requestMatchers("/relatorio").permitAll()
+
+                        .requestMatchers("/api/commands/report").permitAll()
+
+                        .requestMatchers("/plugins/**", "/dist/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

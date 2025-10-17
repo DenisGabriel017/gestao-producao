@@ -36,4 +36,9 @@ public class Command {
 
     @Column(name = "command_number", nullable = false)
     private Integer commandNumber;
+
+    @Enumerated(EnumType.STRING)
+    private CommandType commandType;
+
+
 }

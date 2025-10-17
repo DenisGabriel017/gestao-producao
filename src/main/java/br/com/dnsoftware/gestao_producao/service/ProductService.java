@@ -56,8 +56,22 @@ public class ProductService {
         productRepository.deleteAllInBatch();
     }
 
-    public List<Product> findFilteredProducts(String keyword,String sectorName){
-       return productRepository.findFilteredProducts(keyword, sectorName);
+    public List<Product> findFilteredProducts(
+            String keyword,
+            String sector,
+            Integer day,
+            Integer month,
+            Integer year) {
+        String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        String searchSector = (sector != null && !sector.trim().isEmpty()) ? sector.trim() : null;
+
+        return productRepository.findFilteredProducts(
+                searchKeyword,
+                searchSector,
+                day,
+                month,
+                year
+        );
     }
 
     @Transactional
@@ -104,8 +118,5 @@ public class ProductService {
             }
         }
     }
-
-
-
 
 }

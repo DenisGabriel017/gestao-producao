@@ -1,19 +1,21 @@
 package br.com.dnsoftware.gestao_producao.controller;
 
+import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
 import br.com.dnsoftware.gestao_producao.model.Command;
 import br.com.dnsoftware.gestao_producao.model.Product;
-import br.com.dnsoftware.gestao_producao.model.User;
 import br.com.dnsoftware.gestao_producao.service.CommandService;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
+import br.com.dnsoftware.gestao_producao.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,9 @@ public class CommandController {
 
     @Autowired
     private CommandService commandService;
+
+    @Autowired
+    private ReportService reportService;
 
     @Autowired
     private ProductService productService;
@@ -120,4 +125,38 @@ public class CommandController {
         }
         return "redirect:/comandas";
     }
+
+    @GetMapping("/relatorio")
+    public String viewPerformanceReport(Model model) {
+        return "relatorio-performance";
+    }
+
+    @PostMapping("/delete-all")
+    public String deleteAllCommandsMvc(RedirectAttributes ra) {
+        try {
+            commandService.deleteAllCommands();
+            ra.addFlashAttribute("successMessage", "Todas as comandas foram excluídas com sucesso.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("errorMessage", "Não foi possível apagar as comandas. Existem registros vinculados.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMessage", "Erro inesperado ao excluir comandas: " + e.getMessage());
+        }
+        return "redirect:/comandas";
+    }
+
+    @GetMapping("/api/commands/report")
+    @ResponseBody
+    public ResponseEntity<List<PerformanceReportDTO>> getPerformanceReport(
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<PerformanceReportDTO> report = reportService.generatePerformanceReport(startDate, endDate);
+
+        return ResponseEntity.ok(report);
+    }
+
 }
