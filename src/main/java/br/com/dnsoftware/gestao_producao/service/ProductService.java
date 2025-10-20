@@ -1,6 +1,7 @@
 package br.com.dnsoftware.gestao_producao.service;
 
 import br.com.dnsoftware.gestao_producao.model.Product;
+import br.com.dnsoftware.gestao_producao.model.Sector;
 import br.com.dnsoftware.gestao_producao.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -21,6 +22,9 @@ import java.util.Optional;
 public class ProductService {
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private SectorService sectorService;
 
     public List<Product> findAll(){
         return productRepository.findAll();
@@ -56,22 +60,12 @@ public class ProductService {
         productRepository.deleteAllInBatch();
     }
 
-    public List<Product> findFilteredProducts(
-            String keyword,
-            String sector,
-            Integer day,
-            Integer month,
-            Integer year) {
+    public List<Product> findFilteredProducts(String keyword, String sectorName, String unit) {
         String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
-        String searchSector = (sector != null && !sector.trim().isEmpty()) ? sector.trim() : null;
+        String searchSector = (sectorName != null && !sectorName.trim().isEmpty()) ? sectorName.trim() : null;
+        String searchUnit = (unit != null && !unit.trim().isEmpty()) ? unit.trim() : null;
 
-        return productRepository.findFilteredProducts(
-                searchKeyword,
-                searchSector,
-                day,
-                month,
-                year
-        );
+        return productRepository.findFilteredProducts(searchKeyword, searchSector, searchUnit);
     }
 
     @Transactional
@@ -88,11 +82,13 @@ public class ProductService {
                 String name = dataFormatter.formatCellValue(row.getCell(1));
                 String unit = dataFormatter.formatCellValue(row.getCell(2));
                 String salePriceStr= dataFormatter.formatCellValue(row.getCell(3)).replace(",", ".");
-                String sector = dataFormatter.formatCellValue(row.getCell(4));
+                String sectorName = dataFormatter.formatCellValue(row.getCell(4));
 
                 if (!StringUtils.hasText(code) || !StringUtils.hasText(name)){
                     continue;
                 }
+
+                Sector sector = sectorService.findOrCreateByName(sectorName);
 
                 Optional<Product> existingProduct = productRepository.findByCode(code);
                 Product product;
@@ -117,6 +113,10 @@ public class ProductService {
                 productRepository.save(product);
             }
         }
+    }
+
+    public List<String> findDistinctUnits() {
+        return productRepository.findDistinctUnits();
     }
 
 }

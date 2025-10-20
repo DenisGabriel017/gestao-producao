@@ -7,29 +7,7 @@
 
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css}">
     <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css}">
-    <style>
-        /* CSS para garantir que a página ocupe 100% da tela */
-        html, body {
-            height: 100%;
-        }
-        .wrapper {
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .content-wrapper {
-            flex-grow: 1;
-        }
-        .main-footer {
-            flex-shrink: 0;
-        }
-        /* Correção para o canvas do gráfico */
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
-        }
-    </style>
+    <script th:src="@{https://cdn.jsdelivr.net/npm/chart.js}"></script>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -40,168 +18,203 @@
     <div class="content-wrapper">
         <section class="content-header">
             <div class="container-fluid">
-                <h1>Dashboard</h1>
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>Dashboard</h1>
+                    </div>
+                </div>
             </div>
         </section>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card card-primary card-outline">
-                            <div class="card-header">
-                                <h3 class="card-title">Relatório Consolidado</h3>
-                                <div class="card-tools d-flex">
-                                    <select class="form-control mr-2" id="yearFilter">
-                                        <option value="Todos">Todos</option>
-                                    </select>
-                                    <select class="form-control mr-2" id="monthFilter">
-                                        <option value="Todos">Todos</option>
-                                    </select>
-                                    <select class="form-control" id="sectorFilter" style="display: none;">
-                                        <option value="Todos">Todos</option>
-                                        <option th:each="sector : ${sectors}" th:value="${sector.name}" th:text="${sector.name}"></option>
+
+                <!-- Filtros -->
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Filtros</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="year-filter">Ano</label>
+                                    <select id="year-filter" class="form-control"></select>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="month-filter">Mês</label>
+                                    <select id="month-filter" class="form-control">
+                                        <option value="">Todo o ano</option>
+                                        <!-- Meses são preenchidos via JS -->
                                     </select>
                                 </div>
                             </div>
-                            <div class="card-body" style="position: relative;">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="info-box bg-gradient-success">
-                                            <span class="info-box-icon"><i class="fas fa-cubes"></i></span>
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">Produção Total</span>
-                                                <span class="info-box-number" id="totalProduction">0</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="info-box bg-gradient-danger">
-                                            <span class="info-box-icon"><i class="fas fa-exchange-alt"></i></span>
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">Gap %</span>
-                                                <span class="info-box-number" id="gapPercentage">0%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="chart-container">
-                                    <canvas id="reportChart"></canvas>
-                                </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button id="filter-btn" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Filtrar</button>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Info Boxes -->
+                <div class="row">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-industry"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Total Produzido (Kg)</span>
+                                <span class="info-box-number" id="total-production">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Total de Vendas</span>
+                                <span class="info-box-number" id="total-sales">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-trash-alt"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Total Descartado</span>
+                                <span class="info-box-number" id="total-discard">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-exclamation-triangle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">GAP (%)</span>
+                                <span class="info-box-number" id="gap-percentage">0.00%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Gráfico Consolidado</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="mainChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
     </div>
 
     <footer th:replace="~{fragments :: footer}"></footer>
-    <div th:replace="~{fragments :: scripts}"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        var myChart;
-        var yearFilter = document.getElementById('yearFilter');
-        var monthFilter = document.getElementById('monthFilter');
-        var sectorFilter = document.getElementById('sectorFilter');
+</div>
 
-        function populateYearFilter() {
-            fetch('/api/years')
-                .then(response => response.json())
-                .then(years => {
-                    years.forEach(year => {
-                        const option = document.createElement('option');
-                        option.value = year;
-                        option.textContent = year;
-                        yearFilter.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Erro ao buscar anos:', error));
-        }
+<div th:replace="~{fragments :: scripts}"></div>
 
-        function populateMonthFilter() {
-            monthFilter.innerHTML = '<option value="Todos">Todos</option>';
-            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const selectedYear = yearFilter.value;
+<script th:inline="javascript">
+    $(document).ready(function() {
+        const yearFilter = $('#year-filter');
+        const monthFilter = $('#month-filter');
+        let mainChart;
 
-            if (selectedYear !== 'Todos') {
-                for (let i = 0; i < 12; i++) {
-                    const option = document.createElement('option');
-                    option.value = selectedYear + '-' + String(i + 1).padStart(2, '0');
-                    option.textContent = months[i];
-                    monthFilter.appendChild(option);
-                }
+        // Preenche os meses
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        months.forEach((month, index) => {
+            monthFilter.append(`<option value="${index + 1}">${month}</option>`);
+        });
+
+        // Busca e preenche os anos
+        $.get('/api/years', function(years) {
+            years.forEach(year => {
+                yearFilter.append(`<option value="${year}">${year}</option>`);
+            });
+            // Seleciona o ano atual por padrão
+            const currentYear = new Date().getFullYear().toString();
+            if (years.includes(currentYear)) {
+                yearFilter.val(currentYear);
             }
-        }
+            // Carrega os dados iniciais
+            $('#filter-btn').click();
+        });
 
-        function fetchAndRenderChart() {
-            const year = yearFilter.value === 'Todos' ? null : yearFilter.value;
-            const month = monthFilter.value === 'Todos' ? null : monthFilter.value;
+        // Ação do botão de filtro
+        $('#filter-btn').on('click', function() {
+            const year = yearFilter.val();
+            const month = monthFilter.val();
+            updateDashboard(year, month);
+        });
 
-            let url = '/api/chart-data?';
-            const params = [];
+        function updateDashboard(year, month) {
+            $.ajax({
+                url: '/api/chart-data',
+                data: { year: year, month: month },
+                success: function(data) {
+                    // Atualiza os Info Boxes
+                    $('#total-production').text(parseFloat(data.totalProduction || 0).toFixed(2));
+                    $('#total-sales').text(parseFloat(data.totalSales || 0).toFixed(2));
+                    $('#total-discard').text(parseFloat(data.totalDiscard || 0).toFixed(2));
+                    $('#gap-percentage').text(`${parseFloat(data.gapPercentage || 0).toFixed(2)}%`);
 
-            if (year) {
-                params.push('year=' + encodeURIComponent(year));
-            }
-            if (month) {
-                params.push('month=' + encodeURIComponent(month));
-            }
+                    // Atualiza o gráfico
+                    const chartData = {
+                        labels: ['Produção Total', 'Saídas Totais', 'Vendas', 'Consumo Interno', 'Descarte'],
+                        datasets: [{
+                            label: 'Valores Consolidados',
+                            data: [
+                                data.totalProduction,
+                                data.totalOutput,
+                                data.totalSales,
+                                data.totalInternalConsumption,
+                                data.totalDiscard
+                            ],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.6)',
+                                'rgba(255, 99, 132, 0.6)',
+                                'rgba(75, 192, 192, 0.6)',
+                                'rgba(255, 206, 86, 0.6)',
+                                'rgba(153, 102, 255, 0.6)'
+                            ]
+                        }]
+                    };
 
-            url += params.join('&');
-
-            fetch(url)
-                .then(response => response.json())
-                .then(reportData => {
-                    document.getElementById('totalProduction').textContent = reportData.totalProduction.toFixed(2) + ' Kg';
-                    document.getElementById('gapPercentage').textContent = reportData.gapPercentage + '%';
-
-                    if (myChart) {
-                        myChart.destroy();
-                    }
-
-                    const ctx = document.getElementById('reportChart').getContext('2d');
-                    myChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Produção', 'Saída', 'Gap'],
-                            datasets: [{
-                                label: 'Desempenho Geral',
-                                backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
-                                data: [reportData.totalProduction, reportData.totalOutput, reportData.gap]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: {
-                                    grid: {
-                                        display: false
+                    if (mainChart) {
+                        mainChart.data = chartData;
+                        mainChart.update();
+                    } else {
+                        const ctx = document.getElementById('mainChart').getContext('2d');
+                        mainChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: chartData,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
                                     }
-                                },
-                                y: {
-                                    beginAtZero: true
                                 }
                             }
-                        }
-                    });
-                })
-                .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
+                        });
+                    }
+                },
+                error: function() {
+                    alert('Erro ao carregar os dados do dashboard.');
+                }
+            });
         }
+    });
+</script>
 
-        populateYearFilter();
-        populateMonthFilter();
-
-        yearFilter.addEventListener('change', () => {
-            populateMonthFilter();
-            fetchAndRenderChart();
-        });
-        monthFilter.addEventListener('change', fetchAndRenderChart);
-
-        window.onload = fetchAndRenderChart;
-    </script>
-</div>
 </body>
 </html>

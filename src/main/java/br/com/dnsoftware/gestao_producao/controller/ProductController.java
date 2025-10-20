@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,44 +32,18 @@ public class ProductController {
     public String listProducts(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sector", required = false) String sector,
-            @RequestParam(value = "filterDay", required = false) Integer day,
-            @RequestParam(value = "filterMonth", required = false) Integer month,
-            @RequestParam(value = "filterYear", required = false) Integer year,
+            @RequestParam(value = "unit", required = false) String unit,
             Model model) {
 
-        List<Product> productList;
+        List<Product> productList = productService.findFilteredProducts(keyword, sector, unit);
 
-
-        String finalKeyword = (keyword != null && keyword.isEmpty()) ? null : keyword;
-        String finalSector = (sector != null && sector.isEmpty()) ? null : sector;
-
-
-        if (finalKeyword != null || finalSector != null || day != null || month != null || year != null) {
-
-
-            Integer yearToFilter = year;
-            if (month != null && yearToFilter == null) {
-                yearToFilter = LocalDate.now().getYear();
-            }
-
-            productList = productService.findFilteredProducts(finalKeyword, finalSector, day, month, yearToFilter);
-
-
-            model.addAttribute("currentKeyword", finalKeyword);
-            model.addAttribute("currentSector", finalSector);
-            model.addAttribute("currentDay", day);
-            model.addAttribute("currentMonth", month);
-            model.addAttribute("currentYear", year);
-
-        } else {
-            // Nenhum filtro aplicado: carrega todos os produtos
-            productList = productService.findAll();
-        }
-
-        // Adiciona a lista de produtos, setores e um novo objeto Product ao Model
         model.addAttribute("productList", productList);
         model.addAttribute("sectors", sectorService.findAll());
+        model.addAttribute("units", productService.findDistinctUnits()); // Adiciona a lista de unidades
         model.addAttribute("product", new Product());
+        model.addAttribute("currentKeyword", keyword);
+        model.addAttribute("currentSector", sector);
+        model.addAttribute("currentUnit", unit); // Adiciona o filtro atual
 
         return "product-list";
     }

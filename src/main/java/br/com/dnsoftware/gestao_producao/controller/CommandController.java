@@ -1,8 +1,10 @@
 package br.com.dnsoftware.gestao_producao.controller;
 
+import br.com.dnsoftware.gestao_producao.dto.CommandHistoryDTO;
 import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
 import br.com.dnsoftware.gestao_producao.model.Command;
 import br.com.dnsoftware.gestao_producao.model.Product;
+import br.com.dnsoftware.gestao_producao.model.User;
 import br.com.dnsoftware.gestao_producao.service.CommandService;
 import br.com.dnsoftware.gestao_producao.service.ProductService;
 import br.com.dnsoftware.gestao_producao.service.ReportService;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +49,8 @@ public class CommandController {
     @PostMapping("/save")
     public String saveCommand(@RequestParam Long productId,
                               @RequestParam Integer quantity,
-                              @RequestParam Integer commandNumber) {
+                              @RequestParam Integer commandNumber,
+                              @AuthenticationPrincipal User user) {
 
         Optional<Product> optionalProduct = productService.findById(productId);
         if (optionalProduct.isEmpty()) {
@@ -58,6 +62,7 @@ public class CommandController {
         command.setQuantity(quantity);
         command.setConsumptionDate(LocalDate.now());
         command.setCommandNumber(commandNumber);
+        command.setUser(user);
 
         commandService.save(command);
 
@@ -157,6 +162,13 @@ public class CommandController {
         List<PerformanceReportDTO> report = reportService.generatePerformanceReport(startDate, endDate);
 
         return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/api/history/{productId}")
+    @ResponseBody
+    public ResponseEntity<List<CommandHistoryDTO>> getCommandHistoryByProduct(@PathVariable Long productId) {
+        List<CommandHistoryDTO> history = commandService.findCommandHistoryByProductId(productId);
+        return ResponseEntity.ok(history);
     }
 
 }

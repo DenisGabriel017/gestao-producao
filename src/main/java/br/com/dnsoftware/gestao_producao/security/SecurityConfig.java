@@ -24,9 +24,11 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/login", "/css/**", "/js/**", "/webjars/**").permitAll()
+                        
+                        // Permitindo acesso aos endpoints da API do Dashboard
+                        .requestMatchers("/api/chart-data", "/api/years").permitAll()
 
                         .requestMatchers("/relatorio").permitAll()
-
                         .requestMatchers("/api/commands/report").permitAll()
 
                         .requestMatchers("/plugins/**", "/dist/**").permitAll()
@@ -35,7 +37,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/products", true)
+                        .defaultSuccessUrl("/", true) // Redireciona para o dashboard após o login
                         .permitAll()
                 )
                 .logout((logout) -> logout.permitAll());

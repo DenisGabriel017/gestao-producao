@@ -24,8 +24,9 @@ public class Product {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "sector")
-    private String sector;
+    @ManyToOne
+    @JoinColumn(name = "sector_id")
+    private Sector sector;
 
     @Column(name = "sale_price")
     private Double salePrice;

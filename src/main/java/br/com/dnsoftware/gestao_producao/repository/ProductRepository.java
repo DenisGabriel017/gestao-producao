@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,18 +16,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByName(String name);
 
-    @Query("SELECT DISTINCT p FROM Product p JOIN Command c ON p.id = c.product.id WHERE " +
-            "(:name IS NULL OR :name = '' OR lower(p.name) LIKE lower(concat('%', :name, '%'))) AND " +
-            "(:day IS NULL OR DAY(c.consumptionDate) = :day) AND " +
-            "(:month IS NULL OR MONTH(c.consumptionDate) = :month) AND " +
-            "(:year IS NULL OR YEAR(c.consumptionDate) = :year)")
+    @Query("SELECT p FROM Product p LEFT JOIN p.sector s WHERE " +
+            "(:keyword IS NULL OR :keyword = '' OR lower(p.name) LIKE lower(concat('%', :keyword, '%'))) AND " +
+            "(:sectorName IS NULL OR :sectorName = '' OR s.name = :sectorName) AND " +
+            "(:unit IS NULL OR :unit = '' OR p.unit = :unit)")
     List<Product> findFilteredProducts(
             @Param("keyword") String keyword,
-            @Param("sector") String sector,
-            @Param("day") Integer day,
-            @Param("month") Integer month,
-            @Param("year") Integer year
+            @Param("sectorName") String sectorName,
+            @Param("unit") String unit
     );
+
+    @Query("SELECT DISTINCT p.unit FROM Product p WHERE p.unit IS NOT NULL AND p.unit != '' ORDER BY p.unit")
+    List<String> findDistinctUnits();
 
 
 }

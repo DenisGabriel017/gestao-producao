@@ -29,31 +29,22 @@
 
         <section class="content">
             <div class="container-fluid">
-                <div class="card">
+                <div class="card card-primary card-outline">
                     <div class="card-header">
                         <h3 class="card-title">Filtros de Período</h3>
-                        <div class="card-tools">
-                            <div class="dropdown">
-                                <button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
-                                    Visualização Colunas
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right" id="columnVisibilityMenu">
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="form-row">
-                            <div class="col-md-4 mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
                                 <label for="startDate">Data Inicial:</label>
                                 <input type="date" class="form-control" id="startDate" required>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4">
                                 <label for="endDate">Data Final:</label>
                                 <input type="date" class="form-control" id="endDate" required>
                             </div>
-                            <div class="col-md-4 mb-3 d-flex align-items-end">
-                                <button class="btn btn-primary btn-block" id="generateReportBtn">Gerar Relatório</button>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-primary btn-block" id="generateReportBtn"><i class="fas fa-chart-line"></i> Gerar Relatório</button>
                             </div>
                         </div>
                     </div>
@@ -62,8 +53,18 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Resultados Consolidados</h3>
+                        <div class="card-tools">
+                            <div class="dropdown">
+                                <button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-eye"></i> Visualização
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right p-2" id="columnVisibilityMenu" style="min-width: 200px;">
+                                    <!-- Checkboxes de colunas são inseridos aqui via JS -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive-custom">
                             <table class="table table-bordered table-striped table-sm" id="performanceTable">
                                 <thead>
@@ -96,73 +97,72 @@
     <div th:replace="~{fragments :: scripts}"></div>
 
     <script th:inline="javascript">
-        function formatNumber(num) {
-            return parseFloat(num).toFixed(2);
-        }
-
-        const COLUMN_ORDER = [
-            'productName', 'totalProduced', 'totalEtiquetasDescartadas', 'totalVendasABC',
-            'gapBuffet', 'totalEmpresa909', 'totalEmpresa908',
-            'totalTransformacao', 'totalDesperdicio', 'totalSaidas', 'gapFinal'
-        ];
-
-        function toggleColumn(index) {
-            const table = document.getElementById('performanceTable');
-            const columnIndex = index;
-
-            for (let i = 0; i < table.rows.length; i++) {
-                const cell = table.rows[i].cells[columnIndex];
-                if (cell) {
-                    cell.style.display = cell.style.display === 'none' ? '' : 'none';
+        // Script for the report page (v6 - final definitive fix)
+        $(document).ready(function() {
+            function formatNumber(num) {
+                return parseFloat(num || 0).toFixed(2);
+            }
+    
+            const COLUMN_ORDER = [
+                'productName', 'totalProduced', 'totalEtiquetasDescartadas', 'totalVendasABC',
+                'gapBuffet', 'totalEmpresa909', 'totalEmpresa908',
+                'totalTransformacao', 'totalDesperdicio', 'totalSaidas', 'gapFinal'
+            ];
+    
+            function toggleColumn(index, isVisible) {
+                const table = document.getElementById('performanceTable');
+                for (let i = 0; i < table.rows.length; i++) {
+                    const cell = table.rows[i].cells[index];
+                    if (cell) {
+                        cell.style.display = isVisible ? '' : 'none';
+                    }
                 }
             }
-        }
-
-        $(document).ready(function() {
+    
             const $headers = $('#performanceTable th');
             const $menu = $('#columnVisibilityMenu');
-
+    
             $headers.each(function(index) {
                 const columnName = $(this).text();
-                const initiallyHidden = ['Et Desc.', 'Desperdício (916)'].includes(columnName);
-
-                const item = `<a class="dropdown-item checkbox-item" href="#">
-                                <input type="checkbox" data-column-index="${index}" class="column-toggle" ${!initiallyHidden ? 'checked' : ''}>
-                                ${columnName}
-                              </a>`;
+                const initiallyHidden = ["Et Desc."].includes(columnName);
+    
+                const item = `<div class="form-check">
+                                <input class="form-check-input column-toggle" type="checkbox" data-column-index="${index}" id="col-check-${index}" ${!initiallyHidden ? 'checked' : ''}>
+                                <label class="form-check-label" for="col-check-${index}">${columnName}</label>
+                              </div>`;
                 $menu.append(item);
-
+    
                 if (initiallyHidden) {
-                    toggleColumn(index);
+                    toggleColumn(index, false);
                 }
             });
-
-            $menu.on('click', '.column-toggle', function(e) {
-                e.stopPropagation(); // Evita que o dropdown feche
-                const index = $(this).data('column-index');
-                toggleColumn(index);
+    
+            $menu.on('click', function (e) {
+                e.stopPropagation();
             });
-
+    
+            $('.column-toggle').on('change', function() {
+                const index = $(this).data('column-index');
+                toggleColumn(index, $(this).is(':checked'));
+            });
+    
             $('#generateReportBtn').on('click', function() {
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
-
+    
                 if (!startDate || !endDate) {
                     alert('Por favor, selecione as duas datas.');
                     return;
                 }
-
+    
                 $.ajax({
                     url: '/api/commands/report',
                     type: 'GET',
-                    data: {
-                        startDate: startDate,
-                        endDate: endDate
-                    },
+                    data: { startDate: startDate, endDate: endDate },
                     success: function(data) {
                         const $tbody = $('#reportBody');
                         $tbody.empty();
-
+    
                         data.forEach(function(item) {
                             const dataMap = {
                                 productName: item.productName,
@@ -172,30 +172,31 @@
                                 gapBuffet: formatNumber(item.gapBuffet),
                                 totalEmpresa909: formatNumber(item.totalEmpresa909),
                                 totalEmpresa908: formatNumber(item.totalEmpresa908),
-                                totalTransformacao: formatNumber(0.00),
+                                totalTransformacao: formatNumber(item.totalTransformacao),
                                 totalDesperdicio: formatNumber(item.totalDesperdicio),
                                 totalSaidas: formatNumber(item.totalSaidas),
                                 gapFinal: formatNumber(item.gapFinal)
                             };
-
+    
                             let rowHtml = '<tr>';
                             COLUMN_ORDER.forEach(function(key) {
                                 let cellClass = '';
                                 if (key === 'gapBuffet') cellClass = 'bg-primary font-weight-bold';
                                 if (key === 'totalSaidas') cellClass = 'bg-info';
                                 if (key === 'gapFinal') cellClass = 'bg-warning font-weight-bold';
-
-                                rowHtml += `<td class="${cellClass}">${dataMap[key]}</td>`;
+    
+                                rowHtml += `<td class="${cellClass}" data-col-key="${key}">${dataMap[key]}</td>`;
                             });
                             rowHtml += '</tr>';
                             $tbody.append(rowHtml);
                         });
-
-                        $('#columnVisibilityMenu input:not(:checked)').each(function() {
+    
+                        // Re-aplica a visibilidade das colunas
+                        $('.column-toggle').each(function() {
                             const index = $(this).data('column-index');
-                            toggleColumn(index);
+                            toggleColumn(index, $(this).is(':checked'));
                         });
-
+    
                     },
                     error: function(xhr, status, error) {
                         alert('Erro ao buscar o relatório. Verifique o console para detalhes.');

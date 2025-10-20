@@ -39,7 +39,7 @@ public class DashboardController {
     @ResponseBody
     public Map<String, Object> getChartData(@RequestParam(required = false) String year,
                                             @RequestParam(required = false) String month) {
-        return reportService.getConsolidatedReport(year, month);
+        return reportService.getDashboardReport(year, month);
     }
 
     @GetMapping("/api/years")

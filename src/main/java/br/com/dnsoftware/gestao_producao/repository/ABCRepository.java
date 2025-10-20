@@ -19,11 +19,14 @@ public interface ABCRepository extends JpaRepository<ABC, Long> {
 
     @Query("SELECT abc FROM ABC abc WHERE " +
             "(:keyword IS NULL OR LOWER(abc.product.name) LIKE :keyword OR LOWER(abc.product.code) LIKE :keyword) " +
-            "AND (:sectorName IS NULL OR abc.product.sector = :sectorName)")
+            "AND (:sectorName IS NULL OR abc.product.sector.name = :sectorName)")
     List<ABC> findFilteredAbcData(@Param("keyword") String keyword, @Param("sectorName") String sectorName);
 
-    @Query("SELECT DISTINCT a.product.sector FROM ABC a")
+    @Query("SELECT DISTINCT a.product.sector.name FROM ABC a")
     List<String> findDistinctSectors();
 
     Optional<ABC> findByProductAndSaleDate(Product product, LocalDate saleDate);
+
+    @Query("SELECT SUM(a.soldUnits) FROM ABC a WHERE a.saleDate BETWEEN :startDate AND :endDate")
+    Optional<Long> sumSoldUnitsByPeriod(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

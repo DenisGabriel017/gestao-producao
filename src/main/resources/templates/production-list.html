@@ -17,174 +17,132 @@
     <div class="content-wrapper">
         <section class="content-header">
             <div class="container-fluid">
-                <h1>Lançamentos de Produção</h1>
+                <h1>Lançamento de Produção</h1>
             </div>
         </section>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="d-flex justify-content-start mb-3">
-                    <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#modal-add-production">
-                        <i class="fas fa-plus"></i> Novo Lançamento
-                    </button>
-                    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-production-upload">
-                        <i class="fas fa-upload"></i> Importar Excel
-                    </button>
-                    <form th:action="@{/production/delete-all}" method="post" class="d-inline">
-                        <button type="submit"
-                                class="btn btn-danger btn-sm ml-2"
-                                onclick="return confirm('ATENÇÃO: Você tem certeza que deseja excluir TODOS os registros de Produção? Esta ação é irreversível.');"
-                                title="Excluir TODOS os registros de Produção">
-                            <i class="fas fa-trash-alt"></i> Excluir Toda a Produção
-                        </button>
-                    </form>
+
+                <!-- Alertas de Sucesso/Erro -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:utext="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Tabela de Lançamentos de Produção</h3>
-                        <div class="card-tools">
-                            <form th:action="@{/production}" method="get" class="d-inline-flex align-items-center mr-2">
-                                <input type="text" name="keyword" th:value="${keyword}" class="form-control form-control-sm" placeholder="Pesquisar por nome ou código">
-                                <select name="sector" class="form-control form-control-sm ml-2">
-                                    <option value="">Todos os Setores</option>
-                                    <option th:each="s : ${sectors}"
-                                            th:value="${s}"
-                                            th:text="${s}"
-                                            th:selected="${selectedSector == s}"></option>
-                                </select>
-                                <select name="year" class="form-control form-control-sm ml-2">
-                                    <option value="">Todos os Anos</option>
-                                    <option th:each="y : ${distinctYears}"
-                                            th:value="${y}"
-                                            th:text="${y}"
-                                            th:selected="${selectedYear == y}"></option>
-                                </select>
-                                <button type="submit" class="btn btn-primary btn-sm ml-2">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                                <a th:href="@{/production}" class="btn btn-secondary btn-sm ml-1" title="Limpar Filtro">
-                                    <i class="fas fa-eraser"></i>
-                                </a>
+                <div class="row">
+                    <!-- Coluna da Esquerda: Formulário de Lançamento -->
+                    <div class="col-md-4">
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">Adicionar Registro de Produção</h3>
+                            </div>
+                            <form th:action="@{/production/save}" method="post">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="product-select">Produto</label>
+                                        <select id="product-select" name="productId" class="form-control" required>
+                                            <option value="">Selecione um produto</option>
+                                            <option th:each="p : ${productList}" th:value="${p.id}" th:text="${p.name}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="producedUnits">Unidades Produzidas</label>
+                                        <input type="number" step="0.01" id="producedUnits" name="producedUnits" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="totalWeightKg">Peso Total (Kg)</label>
+                                        <input type="number" step="0.01" id="totalWeightKg" name="totalWeightKg" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">Salvar</button>
+                                </div>
                             </form>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Produto</th>
-                                <th>Produzido</th>
-                                <th>Peso Total</th>
-                                <th>Ações</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="production : ${productionList}">
-                                <td th:text="${#temporals.format(production.productionDate, 'dd/MM/yyyy')}"></td>
-                                <td th:text="${production.product.name}"></td>
-                                <td th:text="${production.producedUnits}"></td>
-                                <td th:text="${production.totalWeightKg}"></td>
-                                <td>
-                                    <a th:href="@{/production/edit/{id}(id=${production.id})}" class="btn btn-info btn-sm">Editar</a>
-                                    <a th:href="@{/production/delete/{id}(id=${production.id})}" class="btn btn-danger btn-sm">Excluir</a>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+
+                    <!-- Coluna da Direita: Tabela de Produção -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Produção Recente</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importProductionModal">
+                                        <i class="fas fa-file-excel"></i> Importar via Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Unidades Produzidas</th>
+                                        <th>Peso Total (Kg)</th>
+                                        <th>Data</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="prod : ${productionList}">
+                                        <td th:text="${prod.product.name}"></td>
+                                        <td th:text="${prod.producedUnits}"></td>
+                                        <td th:text="${prod.totalWeightKg}"></td>
+                                        <td th:text="${#temporals.format(prod.productionDate, 'dd/MM/yyyy')}"></td>
+                                        <td>
+                                            <a th:href="@{/production/edit/{id}(id=${prod.Id})}" class="btn btn-info btn-sm"><i class="fas fa-pencil-alt"></i></a>
+                                            <a th:href="@{/production/delete/{id}(id=${prod.Id})}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza?');"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </div>
 
-    <div class="modal fade" id="modal-add-production">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Lançar Produção</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <form th:action="@{/production/save}" method="post">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="productSelect">Produto</label>
-                            <select class="form-control" id="productSelect" name="productId" required>
-                                <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="producedUnits">Unidades Produzidas</label>
-                            <input type="number" class="form-control" id="producedUnits" name="producedUnits" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="totalWeightKg">Peso Total (Kg)</label>
-                            <input type="number" step="0.01" class="form-control" id="totalWeightKg" name="totalWeightKg">
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Lançamento</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modal-production-upload">
-        <div class="modal-dialog">
+    <!-- Modal de Importação de Produção -->
+    <div class="modal fade" id="importProductionModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <form th:action="@{/production/upload/production}" method="post" enctype="multipart/form-data">
                     <div class="modal-header">
-                        <h4 class="modal-title">Importar Relatório de Produção</h4>
+                        <h5 class="modal-title">Importar Produção via Excel</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
+                            <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label for="startDate">Data de Início:</label>
-                            <input type="date" class="form-control" id="startDate" name="startDate" required>
+                        <div class="alert alert-info">
+                            <strong>Instruções:</strong>
+                            <p>O arquivo deve ser um Excel (.xlsx) com 3 colunas, <strong>nesta ordem e sem cabeçalho</strong>:</p>
+                            <ol>
+                                <li><strong>CÓDIGO DO PRODUTO</strong></li>
+                                <li><strong>QUANTIDADE PRODUZIDA</strong></li>
+                                <li><strong>DIA DO MÊS</strong> (ex: 1, 2, 15)</li>
+                            </ol>
+                            <p><strong>Atenção:</strong> O mês e o ano da produção serão definidos pela data que você selecionar abaixo.</p>
                         </div>
                         <div class="form-group">
-                            <label for="endDate">Data Final:</label>
-                            <input type="date" class="form-control" id="endDate" name="endDate" required>
+                            <label for="file">Selecione o arquivo Excel</label>
+                            <input type="file" name="file" class="form-control-file" id="file" accept=".xlsx" required>
                         </div>
+                        <hr>
                         <div class="form-group">
-                            <label for="productionFile">Selecione o arquivo Excel (.xlsx)</label>
-                            <input type="file" class="form-control" id="productionFile" name="file" required>
+                            <label for="startDate">Data da Produção (Mês e Ano)</label>
+                            <input type="date" name="startDate" class="form-control" id="startDate" required>
                         </div>
                     </div>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                        <button type="submit" class="btn btn-primary">Importar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modal-comanda-upload">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form th:action="@{/production/upload/comandas}" method="post" enctype="multipart/form-data">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Importar Relatório de Comandas</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="comandaFile">Selecione o arquivo Excel (.xlsx)</label>
-                            <input type="file" class="form-control" id="comandaFile" name="file" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
                         <button type="submit" class="btn btn-primary">Importar</button>
                     </div>
                 </form>
@@ -193,8 +151,9 @@
     </div>
 
     <footer th:replace="~{fragments :: footer}"></footer>
-    <div th:replace="~{fragments :: scripts}"></div>
 
 </div>
+
+<div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

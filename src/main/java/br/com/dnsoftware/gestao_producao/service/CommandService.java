@@ -1,6 +1,6 @@
 package br.com.dnsoftware.gestao_producao.service;
 
-import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
+import br.com.dnsoftware.gestao_producao.dto.CommandHistoryDTO;
 import br.com.dnsoftware.gestao_producao.model.Command;
 import br.com.dnsoftware.gestao_producao.model.Product;
 import br.com.dnsoftware.gestao_producao.model.User;
@@ -50,6 +50,10 @@ public class CommandService {
 
     public void deleteById(Long id) {
         commandRepository.deleteById(id);
+    }
+
+    public List<CommandHistoryDTO> findCommandHistoryByProductId(Long productId) {
+        return commandRepository.findCommandHistoryByProductId(productId);
     }
 
     @Transactional
@@ -117,33 +121,7 @@ public class CommandService {
         }
         return errorMessages;
     }
-    public List<PerformanceReportDTO> generatePerformanceReport(LocalDate startDate, LocalDate endDate) {
-
-        List<PerformanceReportDTO> rawResults = commandRepository.findPerformanceReportByPeriod(startDate, endDate);
-
-        for (PerformanceReportDTO dto : rawResults) {
-
-
-            double gapBuffet = dto.getTotalIdaBuffet() - dto.getTotalVoltaBuffet();
-            dto.setGapBuffet(gapBuffet);
-
-
-
-            double totalSaidas = gapBuffet
-                    + dto.getTotalEmpresa908()
-                    + dto.getTotalEmpresa909()
-                    + dto.getTotalOutrosUsosPessoais()
-                    + dto.getTotalDesperdicio()
-                    + dto.getTotalEtiquetasDescartadas();
-            dto.setTotalSaidas(totalSaidas);
-
-
-            double gapFinal = dto.getTotalProduced() - totalSaidas;
-            dto.setGapFinal(gapFinal);
-        }
-
-        return rawResults;
-    }
+    
     @Transactional
     public void deleteAllCommands(){
         commandRepository.deleteAll();

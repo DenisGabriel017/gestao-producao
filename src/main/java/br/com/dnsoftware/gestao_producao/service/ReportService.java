@@ -1,16 +1,20 @@
 package br.com.dnsoftware.gestao_producao.service;
 
 import br.com.dnsoftware.gestao_producao.dto.PerformanceReportDTO;
-import br.com.dnsoftware.gestao_producao.model.ABC;
-import br.com.dnsoftware.gestao_producao.model.CanceledWeighing;
-import br.com.dnsoftware.gestao_producao.model.Command;
-import br.com.dnsoftware.gestao_producao.model.Production;
+import br.com.dnsoftware.gestao_producao.model.CommandType;
+import br.com.dnsoftware.gestao_producao.projections.CommandReportProjection;
+import br.com.dnsoftware.gestao_producao.projections.ProductionReportProjection;
+import br.com.dnsoftware.gestao_producao.repository.ABCRepository;
+import br.com.dnsoftware.gestao_producao.repository.CanceledWeighingRepository;
 import br.com.dnsoftware.gestao_producao.repository.CommandRepository;
+import br.com.dnsoftware.gestao_producao.repository.ProductionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,77 +24,64 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     @Autowired
-    private ProductionService productionService;
+    private ProductionRepository productionRepository;
 
     @Autowired
     private CommandRepository commandRepository;
 
     @Autowired
-    private CommandService commandService;
+    private ABCRepository abcRepository;
 
     @Autowired
-    private ABCService abcService;
+    private CanceledWeighingRepository canceledWeighingRepository;
 
+    public Map<String, Object> getDashboardReport(String yearStr, String monthStr) {
+        LocalDate startDate;
+        LocalDate endDate;
 
+        try {
+            int year = (yearStr != null && !yearStr.isEmpty()) ? Integer.parseInt(yearStr) : YearMonth.now().getYear();
+            int month = 0;
+            if (monthStr != null && !monthStr.isEmpty()) {
+                String cleanedMonth = monthStr.replaceAll("[^0-9]", "");
+                if (!cleanedMonth.isEmpty()) {
+                    month = Integer.parseInt(cleanedMonth);
+                }
+            }
 
-    @Autowired
-    private CanceledWeighingService canceledWeighingService;
+            if (month >= 1 && month <= 12) {
+                YearMonth yearMonth = YearMonth.of(year, month);
+                startDate = yearMonth.atDay(1);
+                endDate = yearMonth.atEndOfMonth();
+            } else {
+                startDate = LocalDate.of(year, 1, 1);
+                endDate = LocalDate.of(year, 12, 31);
+            }
+        } catch (Exception e) {
+            YearMonth currentYearMonth = YearMonth.now();
+            startDate = currentYearMonth.atDay(1);
+            endDate = currentYearMonth.atEndOfMonth();
+        }
 
-    public Map<String, Object> getConsolidatedReport(String year, String month) {
+        // Safely unpack Optionals and handle specific data types (Double vs Long)
+        double totalProduction = productionRepository.sumTotalWeightKgByPeriod(startDate, endDate).orElse(0.0);
+        double totalCanceledWeight = canceledWeighingRepository.sumCanceledWeightKgByPeriod(startDate, endDate).orElse(0.0);
 
-        String filterString = (year != null && month != null) ? year + "-" + month.split("-")[1] : null;
+        // Correctly handle Optional<Long> and convert to double
+        double totalSales = abcRepository.sumSoldUnitsByPeriod(startDate, endDate)
+                                     .map(Long::doubleValue)
+                                     .orElse(0.0);
 
-        List<Production> filteredProduction = productionService.findAll().stream()
-                .filter(p -> (year == null || p.getProductionDate().format(DateTimeFormatter.ofPattern("yyyy")).equals(year)) &&
-                        (filterString == null || p.getProductionDate().format(DateTimeFormatter.ofPattern("yyyy-MM")).equals(filterString)))
-                .collect(Collectors.toList());
+        double totalDiscard = commandRepository.sumQuantityByCommandTypeAndPeriod(CommandType.DESPERDICIO_916, startDate, endDate)
+                                             .orElse(0.0);
 
-        List<Command> filteredCommands = commandService.findAll().stream()
-                .filter(c -> (year == null || c.getConsumptionDate().format(DateTimeFormatter.ofPattern("yyyy")).equals(year)) &&
-                        (filterString == null || c.getConsumptionDate().format(DateTimeFormatter.ofPattern("yyyy-MM")).equals(filterString)))
-                .collect(Collectors.toList());
-
-        List<ABC> filteredABC = abcService.findALL().stream()
-                .filter(a -> (year == null || a.getSaleDate().format(DateTimeFormatter.ofPattern("yyyy")).equals(year)) &&
-                        (filterString == null || a.getSaleDate().format(DateTimeFormatter.ofPattern("yyyy-MM")).equals(filterString)))
-                .collect(Collectors.toList());
-
-        List<CanceledWeighing> filteredCanceledWeighings = canceledWeighingService.findAll().stream()
-                .filter(cw -> (year == null || cw.getCancellationDate().format(DateTimeFormatter.ofPattern("yyyy")).equals(year)) &&
-                        (filterString == null || cw.getCancellationDate().format(DateTimeFormatter.ofPattern("yyyy-MM")).equals(filterString)))
-                .collect(Collectors.toList());
-
-        double totalProduction = filteredProduction.stream()
-                .mapToDouble(Production::getTotalWeightKg)
-                .sum();
-
-        double totalCanceledWeight = filteredCanceledWeighings.stream()
-                .mapToDouble(CanceledWeighing::getCanceledWeightKg)
-                .sum();
-
-        double totalSales = filteredABC.stream()
-                .mapToDouble(ABC::getSoldUnits)
-                .sum();
-
-        double totalDiscard = filteredCommands.stream()
-                .filter(c -> c.getCommandNumber().equals(916))
-                .mapToDouble(Command::getQuantity)
-                .sum();
-
-        double totalInternalConsumption = filteredCommands.stream()
-                .filter(c -> !c.getCommandNumber().equals(916) && !c.getCommandNumber().equals(921))
-                .mapToDouble(Command::getQuantity)
-                .sum();
-
+        List<CommandType> excludedTypes = Arrays.asList(CommandType.DESPERDICIO_916, CommandType.TRANSFORMACAO_921);
+        double totalInternalConsumption = commandRepository.sumQuantityByCommandTypeNotInAndPeriod(excludedTypes, startDate, endDate)
+                                                       .orElse(0.0);
 
         double totalOutput = totalSales + totalInternalConsumption + totalDiscard;
-
-
         double gap = totalProduction - totalOutput;
-
-
         double gapPercentage = (totalProduction > 0) ? (gap / totalProduction) * 100 : 0;
-
 
         Map<String, Object> reportData = new HashMap<>();
         reportData.put("totalProduction", totalProduction);
@@ -107,30 +98,45 @@ public class ReportService {
 
     public List<PerformanceReportDTO> generatePerformanceReport(LocalDate startDate, LocalDate endDate) {
 
-        List<PerformanceReportDTO> results = commandRepository.findPerformanceReportByPeriod(startDate, endDate);
+        List<ProductionReportProjection> productionData = productionRepository.findProductionReportByPeriod(startDate, endDate);
+        List<CommandReportProjection> commandData = commandRepository.findCommandReportByPeriod(startDate, endDate);
+
+        Map<String, PerformanceReportDTO> reportMap = productionData.stream()
+                .collect(Collectors.toMap(ProductionReportProjection::getProductName, p -> {
+                    PerformanceReportDTO dto = new PerformanceReportDTO(p.getProductName());
+                    dto.setTotalProduced(p.getTotalProduced() != null ? p.getTotalProduced() : 0.0);
+                    return dto;
+                }));
 
 
-        for (PerformanceReportDTO dto : results) {
+        commandData.forEach(c -> {
+            PerformanceReportDTO dto = reportMap.computeIfAbsent(c.getProductName(), PerformanceReportDTO::new);
+            dto.setTotalIdaBuffet(c.getTotalIdaBuffet() != null ? c.getTotalIdaBuffet() : 0.0);
+            dto.setTotalVoltaBuffet(c.getTotalVoltaBuffet() != null ? c.getTotalVoltaBuffet() : 0.0);
+            dto.setTotalDesperdicio(c.getTotalDesperdicio() != null ? c.getTotalDesperdicio() : 0.0);
+            dto.setTotalOutrosUsosPessoais(c.getTotalOutrosUsosPessoais() != null ? c.getTotalOutrosUsosPessoais() : 0.0);
+            dto.setTotalEmpresa908(c.getTotalEmpresa908() != null ? c.getTotalEmpresa908() : 0.0);
+            dto.setTotalEmpresa909(c.getTotalEmpresa909() != null ? c.getTotalEmpresa909() : 0.0);
+            dto.setTotalTransformacao(c.getTotalTransformacao() != null ? c.getTotalTransformacao() : 0.0);
+        });
 
-
+        reportMap.values().forEach(dto -> {
             double gapBuffet = dto.getTotalIdaBuffet() - dto.getTotalVoltaBuffet();
             dto.setGapBuffet(gapBuffet);
 
-
             double totalSaidas = gapBuffet
-                    + dto.getTotalEmpresa908()
-                    + dto.getTotalEmpresa909()
                     + dto.getTotalOutrosUsosPessoais()
                     + dto.getTotalDesperdicio()
-                    + dto.getTotalEtiquetasDescartadas();
+                    + dto.getTotalEmpresa908()
+                    + dto.getTotalEmpresa909()
+                    + dto.getTotalTransformacao();
             dto.setTotalSaidas(totalSaidas);
-
 
             double gapFinal = dto.getTotalProduced() - totalSaidas;
             dto.setGapFinal(gapFinal);
-        }
+        });
 
-        return results;
+        return new ArrayList<>(reportMap.values());
     }
 
 }

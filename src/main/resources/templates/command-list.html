@@ -17,143 +17,222 @@
     <div class="content-wrapper">
         <section class="content-header">
             <div class="container-fluid">
-                <h1>Comandas (Consumo Interno)</h1>
+                <h1>Lançamento de Comandas</h1>
             </div>
         </section>
 
         <section class="content">
             <div class="container-fluid">
-                <div class="mb-3">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-add-command">
-                        <i class="fas fa-plus"></i> Nova Comanda
+
+                <!-- Alertas de Sucesso/Erro -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-comanda-upload">
-                        <i class="fas fa-file-upload"></i> Importar Comandas
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div th:utext="${errorMessage}"></div>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
-                    <form th:action="@{/comandas/delete-all}" method="post" class="d-inline">
-                        <button type="submit"
-                                class="btn btn-danger btn-sm ml-2"
-                                onclick="return confirm('ATENÇÃO: Esta ação irá excluir todas as Comandas e seus Itens. Tem certeza?');"
-                                title="Excluir TODAS as Comandas">
-                            <i class="fas fa-trash-alt"></i> Excluir Todas as Comandas
-                        </button>
-                    </form>
                 </div>
 
-                <div class="modal fade" id="modal-add-command">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title">Registrar Comanda</h4>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
+                <div class="row">
+                    <!-- Coluna da Esquerda: Formulários e Histórico -->
+                    <div class="col-md-4">
+                        <!-- Formulário de Lançamento -->
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">Adicionar Comanda</h3>
                             </div>
                             <form th:action="@{/comandas/save}" method="post">
-                                <div class="modal-body">
+                                <div class="card-body">
                                     <div class="form-group">
-                                        <label for="productId">Produto</label>
-                                        <select class="form-control" id="productId" name="productId" required>
-                                            <option th:each="product : ${productList}" th:value="${product.id}" th:text="${product.name}"></option>
+                                        <label for="product-select">Produto</label>
+                                        <select id="product-select" name="productId" class="form-control" required>
+                                            <option value="">Selecione um produto</option>
+                                            <option th:each="p : ${productList}" th:value="${p.id}" th:text="${p.name}"></option>
                                         </select>
                                     </div>
                                     <div class="form-group">
                                         <label for="quantity">Quantidade</label>
-                                        <input type="number" class="form-control" id="quantity" name="quantity" required>
+                                        <input type="number" id="quantity" name="quantity" class="form-control" required>
                                     </div>
                                     <div class="form-group">
                                         <label for="commandNumber">Número da Comanda</label>
-                                        <select class="form-control" id="commandNumber" name="commandNumber" required>
-                                            <option th:each="i : ${#numbers.sequence(901, 921)}" th:value="${i}" th:text="${i}"></option>
-                                        </select>
+                                        <input type="number" id="commandNumber" name="commandNumber" class="form-control" required>
                                     </div>
                                 </div>
-                                <div class="modal-footer justify-content-between">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                                    <button type="submit" class="btn btn-primary">Salvar Comanda</button>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">Salvar</button>
                                 </div>
                             </form>
                         </div>
-                    </div>
-                </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Tabela de Comandas</h3>
+                        <!-- Card de Histórico de Consumo -->
+                        <div class="card card-info collapsed-card" id="history-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Histórico de Consumo</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Qtd</th>
+                                        <th>Nº Comanda</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="history-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Código</th>
-                                <th>Produto</th>
-                                <th>Quantidade</th>
-                                <th>Data</th>
-                                <th>Comanda</th>
-                                <th>Ações</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="command : ${commandList}">
-                                <td th:text="${command.id}"></td>
-                                <td th:text="${command.product.code}"></td>
-                                <td th:text="${command.product.name}"></td>
-                                <td th:text="${command.quantity}"></td>
-                                <td th:text="${#temporals.format(command.consumptionDate, 'dd/MM/yyyy')}"></td>
-                                <td th:text="${command.commandNumber}"></td>
-                                <td>
-                                    <a th:href="@{/comandas/edit/{id}(id=${command.id})}" class="btn btn-info btn-sm">Editar</a>
-                                    <a th:href="@{/comandas/delete/{id}(id=${command.id})}" class="btn btn-danger btn-sm">Excluir</a>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+
+                    <!-- Coluna da Direita: Tabela de Comandas -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Comandas Lançadas Recentemente</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#importModal">
+                                        <i class="fas fa-file-excel"></i> Importar via Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Data</th>
+                                        <th>Nº Comanda</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="cmd : ${commandList}">
+                                        <td th:text="${cmd.product.name}"></td>
+                                        <td th:text="${cmd.quantity}"></td>
+                                        <td th:text="${#temporals.format(cmd.consumptionDate, 'dd/MM/yyyy')}"></td>
+                                        <td th:text="${cmd.commandNumber}"></td>
+                                        <td>
+                                            <a th:href="@{/comandas/edit/{id}(id=${cmd.id})}" class="btn btn-info btn-sm"><i class="fas fa-pencil-alt"></i></a>
+                                            <a th:href="@{/comandas/delete/{id}(id=${cmd.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza?');"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </div>
 
-    <footer th:replace="~{fragments :: footer}"></footer>
-    <div th:replace="~{fragments :: scripts}"></div>
-
-</div>
-
-<div class="modal fade" id="modal-comanda-upload">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form th:action="@{/comandas/upload/comandas}" method="post" enctype="multipart/form-data">
-                <div class="modal-header">
-                    <h4 class="modal-title">Importar Relatório de Comandas</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
+    <!-- Modal de Importação -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form th:action="@{/comandas/upload/comandas}" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Importar Comandas via Excel</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
                         <div class="alert alert-info">
-                            Use um arquivo Excel (.xlsx) com as colunas na ordem: **Código,Peso, Comanda**.
+                            <strong>Instruções:</strong>
+                            <p>O arquivo deve ser um Excel (.xlsx) com 3 colunas, <strong>nesta ordem e sem cabeçalho</strong>:</p>
+                            <ol>
+                                <li><strong>CÓDIGO DO PRODUTO</strong></li>
+                                <li><strong>QUANTIDADE</strong></li>
+                                <li><strong>NÚMERO DA COMANDA</strong></li>
+                            </ol>
                         </div>
-                    <div class="form-group">
-                        <label for="startDate">Data de Início:</label>
-                        <input type="date" class="form-control" id="startDate" name="startDate" required>
+                        <div class="form-group">
+                            <label for="file">Selecione o arquivo Excel</label>
+                            <input type="file" name="file" class="form-control-file" id="file" accept=".xlsx" required>
+                        </div>
+                        <hr>
+                        <p>Selecione o período para o qual os dados serão importados:</p>
+                        <div class="form-group">
+                            <label for="startDate">Data Inicial</label>
+                            <input type="date" name="startDate" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">Data Final</label>
+                            <input type="date" name="endDate" class="form-control" id="endDate" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="endDate">Data Final:</label>
-                        <input type="date" class="form-control" id="endDate" name="endDate" required>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Importar</button>
                     </div>
-                    <div class="form-group">
-                        <label for="comandaFile">Selecione o arquivo Excel (.xlsx)</label>
-                        <input type="file" class="form-control" id="comandaFile" name="file" required>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-primary">Importar</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
+
+    <footer th:replace="~{fragments :: footer}"></footer>
+
 </div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+
+<script th:inline="javascript">
+    $(document).ready(function() {
+        const historyCard = $('#history-card');
+        const historyBody = $('#history-body');
+
+        $('#product-select').on('change', function() {
+            const productId = $(this).val();
+
+            if (productId) {
+                $.ajax({
+                    url: '/comandas/api/history/' + productId,
+                    type: 'GET',
+                    success: function(data) {
+                        historyBody.empty();
+                        if (data.length > 0) {
+                            data.forEach(function(command) {
+                                const formattedDate = new Date(command.consumptionDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+                                const row = `<tr>
+                                               <td>${formattedDate}</td>
+                                               <td>${command.quantity}</td>
+                                               <td>${command.commandNumber}</td>
+                                           </tr>`;
+                                historyBody.append(row);
+                            });
+                            if (historyCard.hasClass('collapsed-card')) {
+                                historyCard.CardWidget('toggle');
+                            }
+                        } else {
+                            historyBody.append('<tr><td colspan="3" class="text-center">Nenhum consumo encontrado</td></tr>');
+                        }
+                    },
+                    error: function() {
+                        historyBody.empty();
+                        historyBody.append('<tr><td colspan="3" class="text-center">Erro ao buscar histórico</td></tr>');
+                    }
+                });
+            } else {
+                historyBody.empty();
+                if (!historyCard.hasClass('collapsed-card')) {
+                    historyCard.CardWidget('toggle');
+                }
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
